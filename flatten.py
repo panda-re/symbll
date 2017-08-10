@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 base_type_sizes = {
+    'pointer': 8,           # PANDA only works on 64-bit hosts anyway
     'unsigned long': 8,
     'unsigned int': 4,
     'unsigned short': 2,
@@ -16,31 +17,36 @@ base_type_sizes = {
 }
 
 def sizeof(types, t):
-    if t in types:
-        return types[t][0]
+    if t[0] in types:
+        return types[t[0]][0]
+    elif t[0] == 'array':
+        return t[1] * sizeof(types, t[2])
     else:
-        return base_type_sizes[t]
+        return base_type_sizes[t[0]]
 
-def flatten(types, name, offset=0, prefix=None):
-    if prefix is None: prefix = [name]
-    if name not in types:
-        # Must be a primitive type
-        print "'%s': %d," % ('.'.join(prefix), offset)
+def flatten(types, typ, offset=0, prefix=None):
+    if prefix is None: prefix = []
+    if typ[0] == 'array':
+        for i in range(typ[1]):
+            flatten(types, typ[2], offset+sizeof(types,typ[2])*i, prefix + ["[%d]" % i])
+    elif typ[0] in types:
+        # Struct. Iterate over members and flatten them
+        struct_members = types[typ[0]][1]
+        for memb in sorted(struct_members, key = lambda k: struct_members[k][0]):
+            moff, mtyp = struct_members[memb]
+            flatten(types, mtyp, offset+moff, prefix + [memb])
+    else:
+        # Must be a primitive type; print the whole thing
+        # HACK: turn ".[" into "[" to make arrays prettier
+        flat_name = '.'.join(prefix).replace(".[","[")
+        print "'%s': %d," % (flat_name, offset)
         return
-    struct_members = types[name][1]
-    for memb in sorted(struct_members, key = lambda k: struct_members[k][0]):
-        moff, typ = struct_members[memb]
-        if typ[0] == 'array':
-            for i in range(typ[1]):
-                flatten(types, typ[2][0], offset+sizeof(types,typ[2][0])*i, prefix + ["%s[%d]" % (memb, i)])
-        else:
-            flatten(types, typ[0], offset+moff, prefix + [memb])
 
 if __name__ == "__main__":
     import sys
     import importlib
     cpu = importlib.import_module(sys.argv[1])
-    root_struct = cpu.cpu_name
-    print "{"
-    flatten(cpu.cpu_types, root_struct)
+    root_struct = sys.argv[2]
+    print "%s_flat = {" % sys.argv[2]
+    flatten(cpu.cpu_types, [root_struct], prefix=[root_struct])
     print "}"
