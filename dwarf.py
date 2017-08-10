@@ -33,8 +33,12 @@ class DWARFParser(object):
 
     sz2tp = {8: 'long long', 4: 'int', 2: 'short', 1: 'char'}
     tp2vol = {
+        'bool': 'unsigned char',
         '_Bool': 'unsigned char',
         'char': 'char',
+        'wchar_t': 'short',
+        'char16_t': 'short',
+        'char32_t': 'int',
         'float': 'float',
         'double': 'double',
         'long double': 'double',
@@ -50,6 +54,8 @@ class DWARFParser(object):
         'unsigned int': 'unsigned int',
         'sizetype' : 'unsigned long',
         '__int128' : 'int128_t',
+        '__int128 unsigned' : 'uint128_t',
+        'ssizetype' : 'long',
     }
 
 
@@ -78,10 +84,7 @@ class DWARFParser(object):
             if memb[1:3] == "0x":
                 memb = "<0x" + memb[3:].lstrip('0')
 
-            try:
-                resolved = self.id_to_name[memb[1:]]
-            except KeyError:
-                resolved = "'idunno:%s'" % memb[1:]
+            resolved = self.id_to_name[memb[1:]]
 
             return self.resolve(resolved)
 
@@ -226,14 +229,26 @@ class DWARFParser(object):
         elif kind == 'DW_TAG_pointer_type':
             self.id_to_name[statement_id] = ['pointer', data.get('DW_AT_type', ['void'])]
 
+        elif kind == 'DW_TAG_reference_type':
+            self.id_to_name[statement_id] = ['pointer', data.get('DW_AT_type', ['void'])]
+
+        elif kind == 'DW_TAG_rvalue_reference_type':
+            self.id_to_name[statement_id] = ['pointer', data.get('DW_AT_type', ['void'])]
+
         elif kind == 'DW_TAG_base_type':
             self.id_to_name[statement_id] = [self.base_type_name(data)]
 
         elif kind == 'DW_TAG_volatile_type':
             self.id_to_name[statement_id] = data.get('DW_AT_type', ['void'])
 
+        elif kind == 'DW_TAG_restrict_type':
+            self.id_to_name[statement_id] = data.get('DW_AT_type', ['void'])
+
         elif kind == 'DW_TAG_const_type':
             self.id_to_name[statement_id] = data.get('DW_AT_type', ['void'])
+
+        elif kind == 'DW_TAG_class_type':
+            self.id_to_name[statement_id] = ['void']
 
         elif kind == 'DW_TAG_typedef':
             try:
@@ -257,30 +272,31 @@ class DWARFParser(object):
 
         elif kind == 'DW_TAG_member' and parent_kind == 'DW_TAG_structure_type':
             name = data.get('DW_AT_name', "__unnamed_%s" % statement_id).strip('"')
-            try:
-                off = int(data['DW_AT_data_member_location'].split()[1])
-            except:
-                d = data['DW_AT_data_member_location']
-                idx = d.find("(")
+            if 'DW_AT_data_member_location' in data:
+                try:
+                    off = int(data['DW_AT_data_member_location'].split()[1])
+                except:
+                    d = data['DW_AT_data_member_location']
+                    idx = d.find("(")
 
-                if idx != -1:
-                    d = d[:idx]
+                    if idx != -1:
+                        d = d[:idx]
 
-                off = int(d)
+                    off = int(d)
 
-            if 'DW_AT_bit_size' in data and 'DW_AT_bit_offset' in data:
-                full_size = int(data['DW_AT_byte_size'], self.base) * 8
-                stbit = int(data['DW_AT_bit_offset'], self.base)
-                edbit = stbit + int(data['DW_AT_bit_size'], self.base)
-                stbit = full_size - stbit
-                edbit = full_size - edbit
-                stbit, edbit = edbit, stbit
-                assert stbit < edbit
-                memb_tp = ['BitField', dict(start_bit = stbit, end_bit = edbit)]
-            else:
-                memb_tp = data['DW_AT_type']
+                if 'DW_AT_bit_size' in data and 'DW_AT_bit_offset' in data:
+                    full_size = int(data['DW_AT_byte_size'], self.base) * 8
+                    stbit = int(data['DW_AT_bit_offset'], self.base)
+                    edbit = stbit + int(data['DW_AT_bit_size'], self.base)
+                    stbit = full_size - stbit
+                    edbit = full_size - edbit
+                    stbit, edbit = edbit, stbit
+                    assert stbit < edbit
+                    memb_tp = ['BitField', dict(start_bit = stbit, end_bit = edbit)]
+                else:
+                    memb_tp = data['DW_AT_type']
 
-            self.vtypes[parent_name][1][name] = [off, memb_tp]
+                self.vtypes[parent_name][1][name] = [off, memb_tp]
 
         elif kind == 'DW_TAG_member' and parent_kind == 'DW_TAG_union_type':
             name = data.get('DW_AT_name', "__unnamed_%s" % statement_id).strip('"')
@@ -314,7 +330,7 @@ class DWARFParser(object):
             self.id_to_name[parent_name] = ['array', sz, tp]
         else:
             pass
-            #print "Skipping unsupported tag %s" % parsed['kind']
+            #print "Skipping unsupported tag %s" % kind
 
 
     def process_variable(self, data):
@@ -371,7 +387,7 @@ class DWARFParser(object):
 
     def print_output(self):
         self.finalize()
-        print "linux_types = {"
+        print "cpu_types = {"
 
         for t in self.all_vtypes:
             print "  '%s': [ %#x, {" % (t, self.all_vtypes[t][0])
