@@ -1,4 +1,4 @@
-{
+slot_to_offset = {
 'X86CPU.parent_obj.parent_obj': 0,
 'X86CPU.parent_obj.nr_cores': 112,
 'X86CPU.parent_obj.nr_threads': 116,

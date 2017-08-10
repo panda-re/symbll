@@ -7,6 +7,13 @@ from collections import defaultdict
 import enum
 import sys
 import plog_reader
+import i386 
+from i386_flat import *
+
+offset_to_slot = {}
+for slot in slot_to_offset.keys():
+    offset = slot_to_offset[slot]
+    offset_to_slot[offset] = slot
 
 class LLVMType(Enum):
     FUNC_CODE_DECLAREBLOCKS    =  1  # DECLAREBLOCKS: [n]
@@ -71,17 +78,42 @@ def unhandled_ram():
     return 0xdeadbeefdeadbeef
 host_ram = defaultdict(unhandled_ram)
 
+symbolic_cpu = {}
+
 def lookup_operand(operand, symbolic_locals):
     if isinstance(operand, Instruction):
         return symbolic_locals[operand]
     elif isinstance(operand, ConstantInt):
-        return operand.z_ext_value
+        return operand.s_ext_value
     else:
         raise NotImplementedError('Unknown operand type')
+
+def lookup_cpu(slotname, numbits, symbolic_cpu):
+    if not(slotname in symbolic_cpu):
+        symbolic_cpu[slotname] = BitVec(slotname, numbits)
+    return symbolic_cpu[slotname]
+
+env = BitVec('env', 64)
+
+def get_cpu_slot(addr):
+    try:
+        offs = simplify(substitute(addr, (env, BitVecVal(i386.cpu_types['X86CPU'][1]['env'][0], 64)))).as_signed_long()
+        if (offs in offset_to_slot):
+            return (offs, offset_to_slot[offsy])
+        else:
+            print addr
+            raise ValueError("How can addr simplify to a number and not be a slot?")
+    except:
+        return None
+    
 
 def exec_bb(mod, plog, bb, symbolic_locals):
     assert(plog.next().llvmEntry.type == LLVMType.BB)
     for insn in bb.instructions:
+        print "\n\ninstr : " + str(insn)
+        print "locals:"
+        for k in symbolic_locals.keys():
+            print (str(k)) + " : " + str(symbolic_locals[k])
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
@@ -91,7 +123,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             pass
         elif insn.opcode == OPCODE_PTRTOINT:
             if insn.operands[0] == symbolic_locals['env_ptr']:
-                symbolic_locals[insn] = BitVec('env', 64)
+                symbolic_locals[insn] = env 
             else:
                 symbolic_locals[insn] = lookup_operand(insn.operands[0], symbolic_locals)
         elif (insn.opcode == OPCODE_INTTOPTR or
@@ -101,19 +133,46 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             entry = plog.next().llvmEntry
             assert entry.type == LLVMType.FUNC_CODE_INST_LOAD
             m = insn.get_metadata('host')
-            if not (m and m.getOperand(0).getName() == 'rrupdate'):
-                assert entry.address % 8 == 0
-                symbolic_locals[insn] = host_ram[entry.address]
-                print insn
-                raise NotImplementedError("Load that we care about")
+            if m and m.getOperand(0).getName() == 'rrupdate':
+                pass
+            else:
+                addr = lookup_operand(insn.operands[0], symbolic_locals)
+                cpu_slot = get_cpu_slot(addr)
+                if cpu_slot:
+                    (offs, slot_name) = cpu_slot
+                    symbolic_locals[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
+                else:
+#                    assert entry.address % 8 == 0
+                    symbolic_locals[insn] = host_ram[entry.address]
+#
+#                print insn
+ #               raise NotImplementedError("Load froma addr outside of cpu?")
         elif insn.opcode == OPCODE_ADD:
-            symbolic_locals[insn] = (lookup_operand(insn.operands[0], symbolic_locals) +
-                                     lookup_operand(insn.operands[1], symbolic_locals))
+            x = lookup_operand(insn.operands[0], symbolic_locals) 
+            y = lookup_operand(insn.operands[1], symbolic_locals)
+            symbolic_locals[insn] = (x+y)                
         elif insn.opcode == OPCODE_STORE:
             entry = plog.next().llvmEntry
             assert entry.type == LLVMType.FUNC_CODE_INST_STORE
             assert entry.address % 8 == 0
-            host_ram[entry.address] = lookup_operand(insn.operands[0], symbolic_locals)
+            host_ram[entry.address] = lookup_operand(insn.operands[0], symbolic_locals) 
+        elif insn.opcode == OPCODE_ICMP:
+            o1 = lookup_operand(insn.operands[0], symbolic_locals)
+            o2 = lookup_operand(insn.operands[1], symbolic_locals)
+            if insn.predicate == ICMP_NE:
+                symbolic_locals[insn] = (o1 != o2)
+            elif insn.predicate == ICMP_EQ:
+                symbolic_locals[insn] = (o1 == o2)
+            else:
+                raise NotImplemented("There are more predicates dum-dum")
+        elif insn.opcode == OPCODE_BR:
+            cond = lookup_operand(insn.operands[0], symbolic_locals)
+            s = Solver()
+            s.add(cond == True)
+            if (s.check()) == sat:
+                successor = insn.operands[1]
+            else:
+                successor = insn.operands[2]
         else:
             print insn
             raise NotImplementedError("Pls implement this instr")
@@ -130,6 +189,8 @@ def exec_function(mod, plog, func):
 mod = Module.from_bitcode(file(sys.argv[1]))
 plog = plog_reader.read(sys.argv[2])
 plog.next()
+
+s = Solver()
 
 while True:
     try:
