@@ -11,8 +11,8 @@ import i386
 from i386_flat import *
 
 offset_to_slot = {}
-for slot in slot_to_offset.keys():
-    offset = slot_to_offset[slot]
+for slot in X86CPU_flat.keys():
+    offset = X86CPU_flat[slot]
     offset_to_slot[offset] = slot
 
 class LLVMType(Enum):
@@ -111,9 +111,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     assert(plog.next().llvmEntry.type == LLVMType.BB)
     for insn in bb.instructions:
         print "\n\ninstr : " + str(insn)
-        print "locals:"
-        for k in symbolic_locals.keys():
-            print (str(k)) + " : " + str(symbolic_locals[k])
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
@@ -176,6 +173,11 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         else:
             print insn
             raise NotImplementedError("Pls implement this instr")
+
+    print "At end of BB.  locals:"
+    for k in symbolic_locals.keys():
+        print (str(k)) + " : " + str(symbolic_locals[k])
+
     return successor
 
 def exec_function(mod, plog, func):
