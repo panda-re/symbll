@@ -61,9 +61,9 @@ def analyze(insn):
 ############################### Common Instructions ###############################
 # handle basic instructions liek ADD
 	elif insn.opcode == OPCODE_ADD:
-        x = lookup_operand(insn.operands[0], symbolic_locals) 
-        y = lookup_operand(insn.operands[1], symbolic_locals)
-        symbolic_locals[insn] = (x+y)    
+        x = lookup_operand(insn.operands[0], symbolic_store) 
+        y = lookup_operand(insn.operands[1], symbolic_store)
+        symbolic_store[insn] = (x+y)    
 ############################### Memory Access ###############################
 # handle memory allocations
 # do nothing
@@ -80,20 +80,20 @@ def analyze(insn):
         if m and m.getOperand(0).getName() == 'rrupdate':
             pass
         else:
-            addr = lookup_operand(insn.operands[0], symbolic_locals)
+            addr = lookup_operand(insn.operands[0], symbolic_store)
             cpu_slot = get_cpu_slot(addr)
     	    if cpu_slot:
         	    (offs, slot_name) = cpu_slot
-                symbolic_locals[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
+                symbolic_store[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
             else:
-                symbolic_locals[insn] = host_ram[entry.address]
+                symbolic_store[insn] = host_ram[entry.address]
 # handle STORE
 # write to symbolic vars
     elif insn.opcode == OPCODE_STORE:
         entry = plog.next().llvmEntry
         assert entry.type == LLVMType.FUNC_CODE_INST_STORE
         assert entry.address % 8 == 0
-        host_ram[entry.address] = lookup_operand(insn.operands[0], symbolic_locals) 
+        host_ram[entry.address] = lookup_operand(insn.operands[0], symbolic_store) 
 
 
 ############################### Environment Interaction ###############################
@@ -107,25 +107,25 @@ def analyze(insn):
 
 # handle ptr to integers    
     elif insn.opcode == OPCODE_PTRTOINT:
-        if insn.operands[0] == symbolic_locals['env_ptr']:
-            symbolic_locals[insn] = env 
+        if insn.operands[0] == symbolic_store['env_ptr']:
+            symbolic_store[insn] = env 
         else:
-                symbolic_locals[insn] = lookup_operand(insn.operands[0], symbolic_locals)
+                symbolic_store[insn] = lookup_operand(insn.operands[0], symbolic_store)
 # handlte integers to pointers
     elif (insn.opcode == OPCODE_INTTOPTR or
               insn.opcode == OPCODE_BITCAST):
-            symbolic_locals[insn] = lookup_operand(insn.operands[0], symbolic_locals)
+            symbolic_store[insn] = lookup_operand(insn.operands[0], symbolic_store)
 
 ############################### Branches ###############################
 # handle COMPAREs
 # write predicate to symbolic_vars
     elif insn.opcode == OPCODE_ICMP:
-        o1 = lookup_operand(insn.operands[0], symbolic_locals)
-        o2 = lookup_operand(insn.operands[1], symbolic_locals)
+        o1 = lookup_operand(insn.operands[0], symbolic_store)
+        o2 = lookup_operand(insn.operands[1], symbolic_store)
         if insn.predicate == ICMP_NE:
-           symbolic_locals[insn] = (o1 != o2)
+         	path_constraints[insn] = (o1 != o2)
     	elif insn.predicate == ICMP_EQ:
-        	symbolic_locals[insn] = (o1 == o2)
+        	path_constraints[insn] = (o1 == o2)
         else:
             raise NotImplemented("There are more predicates dum-dum")
     
@@ -133,29 +133,24 @@ def analyze(insn):
 # set a target address (successor)
 # add it to our SMT solver
     elif insn.opcode == OPCODE_BR:
-        cond = lookup_operand(insn.operands[0], symbolic_locals)
+        cond = lookup_operand(insn.operands[0], symbolic_store)
         s = Solver()
         s.add(cond == True)
         if (s.check()) == sat:
             successor = insn.operands[1]
+	        # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)
         else:
             successor = insn.operands[2]
-
+	        # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)#
 # print default case
     else:
         print insn
         raise NotImplementedError("Pls implement this instr")
-
-#print all new symbolics found in this basic block and return the next Block to analyze (successor)
-    print "At end of BB.  locals:"
-    for k in symbolic_locals.keys():
-        print (str(k)) + " : " + str(symbolic_locals[k])
-
 	return successor
 
-def lookup_operand(operand, symbolic_locals):
+def lookup_operand(operand, symbolic_store):
     if isinstance(operand, Instruction):
-        return symbolic_locals[operand]
+        return symbolic_store[operand]
     elif isinstance(operand, ConstantInt):
         return operand.s_ext_value
     else:
@@ -209,13 +204,20 @@ def symbolic_exec():
 			while 1:
 				insts = get_instructions(bb)
 				for inst in insts:### add successor
-					bb = analyze(inst)
+					bb = analyze(inst, symbolic_store, path_constraints)
 				#for loop naturally ends after last instruction, which is a bb; can we assert that?
 			#gets next bbs instructions and starts for loop over
 			#infinite. has to be stopped
+				#print all new symbolics found in this basic block and return the next Block to analyze (successor)
+    			print "At end of BB!"
+    			print "Symbolic Store:"
+    			for k in symbolic_store.keys():
+      				print (str(k)) + " : " + str(symbolic_store[k])
+    			print "Path Constraints:"
+  				for k in path_constraints.keys():
+  					print (str(k)) + " : " + str(path_constraints[k])
 				if bb = RETURN_FUNCTION;
 					break
-					
 
 if __name__ == "__main__":
-symbolic_exec()
+	symbolic_exec()
