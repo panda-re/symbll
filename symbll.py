@@ -37,30 +37,30 @@ def EXIT_USAGE():
 sys.exit(1)
 
 
-class LLVMType(Enum):
-	### Function codes as of symbll.py
-	### added later 
-	### will probably be exported
+#class LLVMType(Enum):
+    ### Function codes as of symbll.py
+    ### added later 
+    ### will probably be exported
 
 def get_function(plog, module):
-	try:
+    try:
         entry = plog.next()
     except StopIteration:
-        break
+        print "x"
     #assert (entry.llvmEntry.type == LLVMType.LLVM_FN)
-    return module.get_function_named('tcg-llvm-tb-%d-%x' % (entry.llvmEntry.tb_num, entry.pc))
+    #return module.get_function_named('tcg-llvm-tb-%d-%x' % (entry.llvmEntry.tb_num, entry.pc))
     #exec_function(mod, plog, f)
 
 def get_bb(f):
-	return f.entry_basic_block
+    return f.entry_basic_block
 
 def get_instruction(i):
-	return bb.instructions
+    return bb.instructions
 
 def analyze(insn):
 ############################### Common Instructions ###############################
 # handle basic instructions liek ADD
-	elif insn.opcode == OPCODE_ADD:
+    if insn.opcode == OPCODE_ADD:
         x = lookup_operand(insn.operands[0], symbolic_store) 
         y = lookup_operand(insn.operands[1], symbolic_store)
         symbolic_store[insn] = (x+y)    
@@ -82,8 +82,8 @@ def analyze(insn):
         else:
             addr = lookup_operand(insn.operands[0], symbolic_store)
             cpu_slot = get_cpu_slot(addr)
-    	    if cpu_slot:
-        	    (offs, slot_name) = cpu_slot
+            if cpu_slot:
+                (offs, slot_name) = cpu_slot
                 symbolic_store[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
             else:
                 symbolic_store[insn] = host_ram[entry.address]
@@ -99,8 +99,8 @@ def analyze(insn):
 ############################### Environment Interaction ###############################
 # handle Sys Calls
 # pass if syscall was recorded else raise error
-	if insn.opcode == OPCODE_CALL:
-    	if insn.called_function.name.startswith('record'):
+    if insn.opcode == OPCODE_CALL:
+        if insn.called_function.name.startswith('record'):
             pass
         else:
             raise ValueError("unknown function %s encountered" % insn.called_function.name)
@@ -123,9 +123,9 @@ def analyze(insn):
         o1 = lookup_operand(insn.operands[0], symbolic_store)
         o2 = lookup_operand(insn.operands[1], symbolic_store)
         if insn.predicate == ICMP_NE:
-         	path_constraints[insn] = (o1 != o2)
-    	elif insn.predicate == ICMP_EQ:
-        	path_constraints[insn] = (o1 == o2)
+             path_constraints[insn] = (o1 != o2)
+        elif insn.predicate == ICMP_EQ:
+            path_constraints[insn] = (o1 == o2)
         else:
             raise NotImplemented("There are more predicates dum-dum")
     
@@ -138,15 +138,15 @@ def analyze(insn):
         s.add(cond == True)
         if (s.check()) == sat:
             successor = insn.operands[1]
-	        # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)
+            # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)
         else:
             successor = insn.operands[2]
-	        # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)#
+            # we don't need this; BR always follows ICMP path_constraints[insn] = (o1 == o2)#
 # print default case
     else:
         print insn
         raise NotImplementedError("Pls implement this instr")
-	return successor
+    return successor
 
 def lookup_operand(operand, symbolic_store):
     if isinstance(operand, Instruction):
@@ -171,8 +171,9 @@ def get_cpu_slot(addr):
         else:
             print addr
             raise ValueError("How can addr simplify to a number and not be a slot?")
+    #return 1
     except:
-return None
+        return None
 
 
 def symbolic_exec():
@@ -183,41 +184,43 @@ def symbolic_exec():
 
     args, guest_cmd = parser.parse_known_args()
     if args.cmd:
-        guest_cmd = shlex.split(args.cmd)
+       guest_cmd = shlex.split(args.cmd)
 
     if len(sys.argv) < 2:
-		EXIT_USAGE()
+        EXIT_USAGE()
 
-	trace = guest_cmd[0]
-	statement = {} #holds NEXT statement to evaluate; can be assignment, BR, JMP, CALL or LOOP
-	symbolic_store = {}	 #assigns program variables to either concrete or symbolic vars
-	path_constraints = {} #holds assumptions for each symbolic var in symbolic_store
+    trace = guest_cmd[0]
+    statement = {} #holds NEXT statement to evaluate; can be assignment, BR, JMP, CALL or LOOP
+    symbolic_store = {}     #assigns program variables to either concrete or symbolic vars
+    path_constraints = {} #holds assumptions for each symbolic var in symbolic_store
 
-	llvm_module = Module.from_bitcode(file(sys.argv[1]))
-	plog = plog_reader.read(sys.argv[2])
-	plog.next()
+    llvm_module = Module.from_bitcode(file(sys.argv[1]))
+    plog = plog_reader.read(sys.argv[2])
+    plog.next()
 
-	while 1:
-		func = get_function(plog, module)
-		#while 1: # CROSS OUT  actually follows the path rather than iteration over bbs
-			bb = get_bb(func): #can be optimized by inlining, but I fell this is more readable
-			while 1:
-				insts = get_instructions(bb)
-				for inst in insts:### add successor
-					bb = analyze(inst, symbolic_store, path_constraints)
-				#for loop naturally ends after last instruction, which is a bb; can we assert that?
-			#gets next bbs instructions and starts for loop over
-			#infinite. has to be stopped
-				#print all new symbolics found in this basic block and return the next Block to analyze (successor)
-    			print "At end of BB!"
-    			print "Symbolic Store:"
-    			for k in symbolic_store.keys():
-      				print (str(k)) + " : " + str(symbolic_store[k])
-    			print "Path Constraints:"
-  				for k in path_constraints.keys():
-  					print (str(k)) + " : " + str(path_constraints[k])
-				if bb = RETURN_FUNCTION;
-					break
+    while 1:
+        func = get_function(plog, module)
+        #while 1: # CROSS OUT  actually follows the path rather than iteration over bbs
+        bb = get_bb(func) #can be optimized by inlining, but I fell this is more readable
+        while 1:
+           insts = get_instructions(bb)
+           for inst in insts:### add successor
+                bb = analyze(inst, symbolic_store, path_constraints)
+            #for loop naturally ends after last instruction, which is a bb; can we assert that?
+            #gets next bbs instructions and starts for loop over
+            #infinite. has to be stopped
+                #print all new symbolics found in this basic block and return the next Block to analyze (successor)
+                print "At end of BB!"
+                print "Symbolic Store:"
+                for k in symbolic_store.keys():
+                    print (str(k)) + " : " + str(symbolic_store[k])
+                    print "Path Constraints:"
+                for k in path_constraints.keys():
+                    print (str(k)) + " : " + str(path_constraints[k])
+                    if (bb == RETURN_FUNCTION):
+                        break
+                        #print "break"
+    #return None
 
 if __name__ == "__main__":
-	symbolic_exec()
+    symbolic_exec()
