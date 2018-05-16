@@ -17,8 +17,9 @@ Advanced USAGE:
 """
 
 from z3 import *
-from llvm import *
-from llvm.core import *
+from llvmlite import * 
+#from llvm import * ##llvmpy is depricated, now using llvmlite by numba
+#from llvm.core import *
 from collections import defaultdict
 import enum
 import sys
