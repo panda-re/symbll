@@ -37,16 +37,16 @@ def EXIT_USAGE():
 sys.exit(1)
 
 
-class LLVMType(Enum):
+#class LLVMType(Enum):
 	### Function codes as of symbll.py
 	### added later 
 	### will probably be exported
 
 def get_function(plog, module):
 	try:
-        entry = plog.next()
-    except StopIteration:
-        break
+		entry = plog.next()
+	except StopIteration:
+		break
     #assert (entry.llvmEntry.type == LLVMType.LLVM_FN)
     return module.get_function_named('tcg-llvm-tb-%d-%x' % (entry.llvmEntry.tb_num, entry.pc))
     #exec_function(mod, plog, f)

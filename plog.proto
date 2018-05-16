@@ -81,12 +81,17 @@ message TaintedInstrSummary {
     required uint64 pc = 2;
 }
 message LLVMEntry {
-	optional uint64 type = 1;
+    optional uint64 type = 1;
 	optional uint64 address = 2;
-	optional uint64 num_bytes = 3;
-	optional uint64 tb_num = 4;
-	optional uint32 condition = 5;
-	optional uint32 phi_index = 6; // The basic block index before a phi instruction
+    optional uint64 value = 3;
+	optional uint64 num_bytes = 4;
+	optional uint64 tb_num = 5;
+    optional uint32 addr_type = 6;
+    optional uint32 cpustate_offset = 7;
+	optional uint32 condition = 8;
+	optional uint32 phi_index = 9; 
+    optional uint32 flags = 10;
+    optional string vma_name = 11;
 }
 
 
