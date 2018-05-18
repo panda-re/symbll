@@ -18,7 +18,8 @@ _sym_db = _symbol_database.Default()
 DESCRIPTOR = _descriptor.FileDescriptor(
   name='plog.proto',
   package='panda',
-  serialized_pb=_b('\n\nplog.proto\x12\x05panda\"\x19\n\tCallStack\x12\x0c\n\x04\x61\x64\x64r\x18\x01 \x03(\x04\"\x8b\x01\n\tDwarfCall\x12\x13\n\x0b\x66ile_callee\x18\x01 \x02(\t\x12\x1c\n\x14\x66unction_name_callee\x18\x02 \x02(\t\x12\x1a\n\x12line_number_callee\x18\x03 \x02(\x04\x12\x13\n\x0b\x66ile_caller\x18\x04 \x02(\t\x12\x1a\n\x12line_number_caller\x18\x05 \x02(\x04\"p\n\nSrcInfoPri\x12\x10\n\x08\x66ilename\x18\x01 \x02(\t\x12\x0f\n\x07linenum\x18\x02 \x02(\r\x12\x13\n\x0b\x61stnodename\x18\x03 \x02(\t\x12\x16\n\x0einsertionpoint\x18\x04 \x01(\r\x12\x12\n\nast_loc_id\x18\x05 \x01(\r\"i\n\x0e\x41ttackPointPri\x12\x0c\n\x04info\x18\x01 \x02(\r\x12$\n\ncall_stack\x18\x02 \x02(\x0b\x32\x10.panda.CallStack\x12#\n\x08src_info\x18\x03 \x02(\x0b\x32\x11.panda.SrcInfoPri\"\xbf\x01\n\rTaintQueryPri\x12\x0b\n\x03\x62uf\x18\x01 \x02(\x04\x12\x0b\n\x03len\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x61ta\x18\x03 \x03(\r\x12\x13\n\x0bnum_tainted\x18\x04 \x02(\r\x12$\n\ncall_stack\x18\x05 \x02(\x0b\x32\x10.panda.CallStack\x12#\n\x08src_info\x18\x06 \x02(\x0b\x32\x11.panda.SrcInfoPri\x12&\n\x0btaint_query\x18\x07 \x03(\x0b\x32\x11.panda.TaintQuery\"6\n\x18TaintQueryUniqueLabelSet\x12\x0b\n\x03ptr\x18\x01 \x02(\x04\x12\r\n\x05label\x18\x02 \x03(\r\"m\n\x07SrcInfo\x12\x10\n\x08\x66ilename\x18\x01 \x02(\r\x12\x0f\n\x07linenum\x18\x02 \x02(\r\x12\x13\n\x0b\x61stnodename\x18\x03 \x02(\r\x12\x16\n\x0einsertionpoint\x18\x04 \x01(\r\x12\x12\n\nast_loc_id\x18\x05 \x01(\r\"q\n\nTaintQuery\x12\x0b\n\x03ptr\x18\x01 \x02(\x04\x12\x0b\n\x03tcn\x18\x02 \x02(\r\x12\x0e\n\x06offset\x18\x03 \x02(\r\x12\x39\n\x10unique_label_set\x18\x04 \x01(\x0b\x32\x1f.panda.TaintQueryUniqueLabelSet\"c\n\x0b\x41ttackPoint\x12\x0c\n\x04info\x18\x01 \x02(\r\x12$\n\ncall_stack\x18\x02 \x02(\x0b\x32\x10.panda.CallStack\x12 \n\x08src_info\x18\x03 \x02(\x0b\x32\x0e.panda.SrcInfo\"\xc2\x01\n\x13TaintQueryHypercall\x12\x0b\n\x03\x62uf\x18\x01 \x02(\x04\x12\x0b\n\x03len\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x61ta\x18\x03 \x03(\r\x12\x13\n\x0bnum_tainted\x18\x04 \x02(\r\x12$\n\ncall_stack\x18\x05 \x02(\x0b\x32\x10.panda.CallStack\x12 \n\x08src_info\x18\x06 \x02(\x0b\x32\x0e.panda.SrcInfo\x12&\n\x0btaint_query\x18\x07 \x03(\x0b\x32\x11.panda.TaintQuery\"]\n\rTaintedBranch\x12$\n\ncall_stack\x18\x01 \x02(\x0b\x32\x10.panda.CallStack\x12&\n\x0btaint_query\x18\x02 \x03(\x0b\x32\x11.panda.TaintQuery\"0\n\x14TaintedBranchSummary\x12\x0c\n\x04\x61sid\x18\x01 \x02(\x04\x12\n\n\x02pc\x18\x02 \x02(\x04\"\\\n\x0cTaintedInstr\x12$\n\ncall_stack\x18\x01 \x02(\x0b\x32\x10.panda.CallStack\x12&\n\x0btaint_query\x18\x02 \x03(\x0b\x32\x11.panda.TaintQuery\"/\n\x13TaintedInstrSummary\x12\x0c\n\x04\x61sid\x18\x01 \x02(\x04\x12\n\n\x02pc\x18\x02 \x02(\x04\"s\n\tLLVMEntry\x12\x0c\n\x04type\x18\x01 \x01(\x04\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\x04\x12\x11\n\tnum_bytes\x18\x03 \x01(\x04\x12\x0e\n\x06tb_num\x18\x04 \x01(\x04\x12\x11\n\tcondition\x18\x05 \x01(\r\x12\x11\n\tphi_index\x18\x06 \x01(\r\"\xaf\x06\n\x08LogEntry\x12\n\n\x02pc\x18\x01 \x02(\x04\x12\r\n\x05instr\x18\x02 \x02(\x04\x12\x0c\n\x04\x61sid\x18\x03 \x01(\x04\x12\x14\n\x0cprocess_name\x18\x04 \x01(\t\x12\x12\n\nprocess_id\x18\x05 \x01(\r\x12\x13\n\x0btotal_instr\x18\x41 \x01(\x04\x12$\n\ncall_stack\x18\n \x01(\x0b\x32\x10.panda.CallStack\x12$\n\ndwarf_call\x18\x42 \x01(\x0b\x32\x10.panda.DwarfCall\x12#\n\tdwarf_ret\x18\x43 \x01(\x0b\x32\x10.panda.DwarfCall\x12 \n\x18taint_label_virtual_addr\x18\x06 \x01(\x04\x12!\n\x19taint_label_physical_addr\x18\x07 \x01(\x04\x12\x1a\n\x12taint_label_number\x18\x08 \x01(\r\x12-\n\x0ftaint_query_pri\x18\x44 \x01(\x0b\x32\x14.panda.TaintQueryPri\x12/\n\x10\x61ttack_point_pri\x18\x45 \x01(\x0b\x32\x15.panda.AttackPointPri\x12-\n\x12pri_trace_src_info\x18\x46 \x01(\x0b\x32\x11.panda.SrcInfoPri\x12\x39\n\x15taint_query_hypercall\x18& \x01(\x0b\x32\x1a.panda.TaintQueryHypercall\x12(\n\x0c\x61ttack_point\x18\' \x01(\x0b\x32\x12.panda.AttackPoint\x12,\n\x0etainted_branch\x18$ \x01(\x0b\x32\x14.panda.TaintedBranch\x12;\n\x16tainted_branch_summary\x18H \x01(\x0b\x32\x1b.panda.TaintedBranchSummary\x12*\n\rtainted_instr\x18% \x01(\x0b\x32\x13.panda.TaintedInstr\x12\x39\n\x15tainted_instr_summary\x18\x38 \x01(\x0b\x32\x1a.panda.TaintedInstrSummary\x12#\n\tllvmEntry\x18\x1e \x01(\x0b\x32\x10.panda.LLVMEntry')
+  syntax='proto2',
+  serialized_pb=_b('\n\nplog.proto\x12\x05panda\"\x19\n\tCallStack\x12\x0c\n\x04\x61\x64\x64r\x18\x01 \x03(\x04\"\x8b\x01\n\tDwarfCall\x12\x13\n\x0b\x66ile_callee\x18\x01 \x02(\t\x12\x1c\n\x14\x66unction_name_callee\x18\x02 \x02(\t\x12\x1a\n\x12line_number_callee\x18\x03 \x02(\x04\x12\x13\n\x0b\x66ile_caller\x18\x04 \x02(\t\x12\x1a\n\x12line_number_caller\x18\x05 \x02(\x04\"p\n\nSrcInfoPri\x12\x10\n\x08\x66ilename\x18\x01 \x02(\t\x12\x0f\n\x07linenum\x18\x02 \x02(\r\x12\x13\n\x0b\x61stnodename\x18\x03 \x02(\t\x12\x16\n\x0einsertionpoint\x18\x04 \x01(\r\x12\x12\n\nast_loc_id\x18\x05 \x01(\r\"i\n\x0e\x41ttackPointPri\x12\x0c\n\x04info\x18\x01 \x02(\r\x12$\n\ncall_stack\x18\x02 \x02(\x0b\x32\x10.panda.CallStack\x12#\n\x08src_info\x18\x03 \x02(\x0b\x32\x11.panda.SrcInfoPri\"\xbf\x01\n\rTaintQueryPri\x12\x0b\n\x03\x62uf\x18\x01 \x02(\x04\x12\x0b\n\x03len\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x61ta\x18\x03 \x03(\r\x12\x13\n\x0bnum_tainted\x18\x04 \x02(\r\x12$\n\ncall_stack\x18\x05 \x02(\x0b\x32\x10.panda.CallStack\x12#\n\x08src_info\x18\x06 \x02(\x0b\x32\x11.panda.SrcInfoPri\x12&\n\x0btaint_query\x18\x07 \x03(\x0b\x32\x11.panda.TaintQuery\"6\n\x18TaintQueryUniqueLabelSet\x12\x0b\n\x03ptr\x18\x01 \x02(\x04\x12\r\n\x05label\x18\x02 \x03(\r\"m\n\x07SrcInfo\x12\x10\n\x08\x66ilename\x18\x01 \x02(\r\x12\x0f\n\x07linenum\x18\x02 \x02(\r\x12\x13\n\x0b\x61stnodename\x18\x03 \x02(\r\x12\x16\n\x0einsertionpoint\x18\x04 \x01(\r\x12\x12\n\nast_loc_id\x18\x05 \x01(\r\"q\n\nTaintQuery\x12\x0b\n\x03ptr\x18\x01 \x02(\x04\x12\x0b\n\x03tcn\x18\x02 \x02(\r\x12\x0e\n\x06offset\x18\x03 \x02(\r\x12\x39\n\x10unique_label_set\x18\x04 \x01(\x0b\x32\x1f.panda.TaintQueryUniqueLabelSet\"c\n\x0b\x41ttackPoint\x12\x0c\n\x04info\x18\x01 \x02(\r\x12$\n\ncall_stack\x18\x02 \x02(\x0b\x32\x10.panda.CallStack\x12 \n\x08src_info\x18\x03 \x02(\x0b\x32\x0e.panda.SrcInfo\"\xc2\x01\n\x13TaintQueryHypercall\x12\x0b\n\x03\x62uf\x18\x01 \x02(\x04\x12\x0b\n\x03len\x18\x02 \x02(\r\x12\x0c\n\x04\x64\x61ta\x18\x03 \x03(\r\x12\x13\n\x0bnum_tainted\x18\x04 \x02(\r\x12$\n\ncall_stack\x18\x05 \x02(\x0b\x32\x10.panda.CallStack\x12 \n\x08src_info\x18\x06 \x02(\x0b\x32\x0e.panda.SrcInfo\x12&\n\x0btaint_query\x18\x07 \x03(\x0b\x32\x11.panda.TaintQuery\"]\n\rTaintedBranch\x12$\n\ncall_stack\x18\x01 \x02(\x0b\x32\x10.panda.CallStack\x12&\n\x0btaint_query\x18\x02 \x03(\x0b\x32\x11.panda.TaintQuery\"0\n\x14TaintedBranchSummary\x12\x0c\n\x04\x61sid\x18\x01 \x02(\x04\x12\n\n\x02pc\x18\x02 \x02(\x04\"\\\n\x0cTaintedInstr\x12$\n\ncall_stack\x18\x01 \x02(\x0b\x32\x10.panda.CallStack\x12&\n\x0btaint_query\x18\x02 \x03(\x0b\x32\x11.panda.TaintQuery\"/\n\x13TaintedInstrSummary\x12\x0c\n\x04\x61sid\x18\x01 \x02(\x04\x12\n\n\x02pc\x18\x02 \x02(\x04\"\xcf\x01\n\tLLVMEntry\x12\x0c\n\x04type\x18\x01 \x01(\x04\x12\x0f\n\x07\x61\x64\x64ress\x18\x02 \x01(\x04\x12\r\n\x05value\x18\x03 \x01(\x04\x12\x11\n\tnum_bytes\x18\x04 \x01(\x04\x12\x0e\n\x06tb_num\x18\x05 \x01(\x04\x12\x11\n\taddr_type\x18\x06 \x01(\r\x12\x17\n\x0f\x63pustate_offset\x18\x07 \x01(\r\x12\x11\n\tcondition\x18\x08 \x01(\r\x12\x11\n\tphi_index\x18\t \x01(\r\x12\r\n\x05\x66lags\x18\n \x01(\r\x12\x10\n\x08vma_name\x18\x0b \x01(\t\"\xaf\x06\n\x08LogEntry\x12\n\n\x02pc\x18\x01 \x02(\x04\x12\r\n\x05instr\x18\x02 \x02(\x04\x12\x0c\n\x04\x61sid\x18\x03 \x01(\x04\x12\x14\n\x0cprocess_name\x18\x04 \x01(\t\x12\x12\n\nprocess_id\x18\x05 \x01(\r\x12\x13\n\x0btotal_instr\x18\x41 \x01(\x04\x12$\n\ncall_stack\x18\n \x01(\x0b\x32\x10.panda.CallStack\x12$\n\ndwarf_call\x18\x42 \x01(\x0b\x32\x10.panda.DwarfCall\x12#\n\tdwarf_ret\x18\x43 \x01(\x0b\x32\x10.panda.DwarfCall\x12 \n\x18taint_label_virtual_addr\x18\x06 \x01(\x04\x12!\n\x19taint_label_physical_addr\x18\x07 \x01(\x04\x12\x1a\n\x12taint_label_number\x18\x08 \x01(\r\x12-\n\x0ftaint_query_pri\x18\x44 \x01(\x0b\x32\x14.panda.TaintQueryPri\x12/\n\x10\x61ttack_point_pri\x18\x45 \x01(\x0b\x32\x15.panda.AttackPointPri\x12-\n\x12pri_trace_src_info\x18\x46 \x01(\x0b\x32\x11.panda.SrcInfoPri\x12\x39\n\x15taint_query_hypercall\x18& \x01(\x0b\x32\x1a.panda.TaintQueryHypercall\x12(\n\x0c\x61ttack_point\x18\' \x01(\x0b\x32\x12.panda.AttackPoint\x12,\n\x0etainted_branch\x18$ \x01(\x0b\x32\x14.panda.TaintedBranch\x12;\n\x16tainted_branch_summary\x18H \x01(\x0b\x32\x1b.panda.TaintedBranchSummary\x12*\n\rtainted_instr\x18% \x01(\x0b\x32\x13.panda.TaintedInstr\x12\x39\n\x15tainted_instr_summary\x18\x38 \x01(\x0b\x32\x1a.panda.TaintedInstrSummary\x12#\n\tllvmEntry\x18\x1e \x01(\x0b\x32\x10.panda.LLVMEntry')
 )
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
@@ -47,6 +48,7 @@ _CALLSTACK = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -105,6 +107,7 @@ _DWARFCALL = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -163,6 +166,7 @@ _SRCINFOPRI = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -207,6 +211,7 @@ _ATTACKPOINTPRI = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -279,6 +284,7 @@ _TAINTQUERYPRI = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -316,6 +322,7 @@ _TAINTQUERYUNIQUELABELSET = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -374,6 +381,7 @@ _SRCINFO = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -425,6 +433,7 @@ _TAINTQUERY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -469,6 +478,7 @@ _ATTACKPOINT = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -541,6 +551,7 @@ _TAINTQUERYHYPERCALL = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -578,6 +589,7 @@ _TAINTEDBRANCH = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -615,6 +627,7 @@ _TAINTEDBRANCHSUMMARY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -652,6 +665,7 @@ _TAINTEDINSTR = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -689,6 +703,7 @@ _TAINTEDINSTRSUMMARY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
@@ -719,30 +734,65 @@ _LLVMENTRY = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='num_bytes', full_name='panda.LLVMEntry.num_bytes', index=2,
+      name='value', full_name='panda.LLVMEntry.value', index=2,
       number=3, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='tb_num', full_name='panda.LLVMEntry.tb_num', index=3,
+      name='num_bytes', full_name='panda.LLVMEntry.num_bytes', index=3,
       number=4, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='condition', full_name='panda.LLVMEntry.condition', index=4,
-      number=5, type=13, cpp_type=3, label=1,
+      name='tb_num', full_name='panda.LLVMEntry.tb_num', index=4,
+      number=5, type=4, cpp_type=4, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
     _descriptor.FieldDescriptor(
-      name='phi_index', full_name='panda.LLVMEntry.phi_index', index=5,
+      name='addr_type', full_name='panda.LLVMEntry.addr_type', index=5,
       number=6, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='cpustate_offset', full_name='panda.LLVMEntry.cpustate_offset', index=6,
+      number=7, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='condition', full_name='panda.LLVMEntry.condition', index=7,
+      number=8, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='phi_index', full_name='panda.LLVMEntry.phi_index', index=8,
+      number=9, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='flags', full_name='panda.LLVMEntry.flags', index=9,
+      number=10, type=13, cpp_type=3, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      options=None),
+    _descriptor.FieldDescriptor(
+      name='vma_name', full_name='panda.LLVMEntry.vma_name', index=10,
+      number=11, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       options=None),
@@ -754,11 +804,12 @@ _LLVMENTRY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1473,
-  serialized_end=1588,
+  serialized_start=1474,
+  serialized_end=1681,
 )
 
 
@@ -931,11 +982,12 @@ _LOGENTRY = _descriptor.Descriptor(
   ],
   options=None,
   is_extendable=False,
+  syntax='proto2',
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=1591,
-  serialized_end=2406,
+  serialized_start=1684,
+  serialized_end=2499,
 )
 
 _ATTACKPOINTPRI.fields_by_name['call_stack'].message_type = _CALLSTACK

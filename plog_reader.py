@@ -6,6 +6,8 @@ import zlib
 import struct
 from os.path import dirname, join, realpath
 
+from plog_enum import LLVMType
+
 panda_dir = dirname(dirname(dirname(realpath(sys.argv[0]))))
 
 def try_path(*args):
@@ -61,10 +63,11 @@ def read(plog):
 
 if __name__ == "__main__":
     from google.protobuf.json_format import MessageToJson
-    print "["
     i = 0
     for message in read(sys.argv[1]):
         if i != 0: print ","
-        print MessageToJson(message)
+        if message.HasField('llvmEntry'):
+            print LLVMType(message.llvmEntry.type)
+        jmsg = MessageToJson(message)
+        print jmsg
         i += 1
-    print "]"
