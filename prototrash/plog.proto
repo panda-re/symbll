@@ -1,0 +1,110 @@
+
+syntax = "proto2";
+package panda;
+
+message CallStack {
+    repeated uint64 addr = 1;
+}
+message DwarfCall {
+    required string file_callee = 1;
+    required string function_name_callee = 2;
+    required uint64 line_number_callee = 3;
+    required string file_caller = 4;
+    required uint64 line_number_caller = 5;
+}
+message SrcInfoPri {
+    required string filename = 1;
+    required uint32 linenum = 2;
+    required string astnodename = 3;
+    optional uint32 insertionpoint = 4;
+    optional uint32 ast_loc_id = 5;
+}
+message AttackPointPri {
+    required uint32 info = 1;
+    required CallStack call_stack = 2;
+    required SrcInfoPri src_info = 3;
+}
+message TaintQueryPri {
+    required uint64 buf = 1;
+    required uint32 len = 2;
+    repeated uint32 data = 3;
+    required uint32 num_tainted = 4;
+    required CallStack call_stack = 5;
+    required SrcInfoPri src_info = 6;
+    repeated TaintQuery taint_query = 7;
+}
+message TaintQueryUniqueLabelSet {
+    required uint64 ptr = 1;
+    repeated uint32 label = 2;
+}
+message SrcInfo {
+    required uint32 filename = 1;
+    required uint32 linenum = 2;
+    required uint32 astnodename = 3;
+    optional uint32 insertionpoint = 4;
+    optional uint32 ast_loc_id = 5;
+}
+message TaintQuery {
+    required uint64 ptr = 1;
+    required uint32 tcn = 2;
+    required uint32 offset = 3;
+    optional TaintQueryUniqueLabelSet unique_label_set = 4;
+}
+message AttackPoint {
+    required uint32 info = 1;
+    required CallStack call_stack = 2;
+    required SrcInfo src_info = 3;
+}
+message TaintQueryHypercall {
+    required uint64 buf = 1;
+    required uint32 len = 2;
+    repeated uint32 data = 3;
+    required uint32 num_tainted = 4;
+    required CallStack call_stack = 5;
+    required SrcInfo src_info = 6;
+    repeated TaintQuery taint_query = 7;
+}
+message TaintedBranch {
+    required CallStack call_stack = 1;
+    repeated TaintQuery taint_query = 2;
+}
+message TaintedBranchSummary {
+    required uint64 asid = 1;
+    required uint64 pc = 2;
+}
+message TaintedInstr {
+    required CallStack call_stack = 1;
+    repeated TaintQuery taint_query = 2;
+}
+message TaintedInstrSummary {
+    required uint64 asid = 1;
+    required uint64 pc = 2;
+}
+
+
+message LogEntry {
+
+required uint64 pc = 1;
+required uint64 instr = 2;
+
+optional uint64 asid = 3; 
+optional string process_name = 4;
+optional uint32 process_id = 5;
+optional uint64 total_instr = 65;
+optional CallStack call_stack = 10;
+optional DwarfCall dwarf_call = 66;
+optional DwarfCall dwarf_ret = 67;
+optional uint64 taint_label_virtual_addr = 6;
+optional uint64 taint_label_physical_addr = 7;
+optional uint32 taint_label_number = 8;
+optional TaintQueryPri taint_query_pri = 68;
+optional AttackPointPri attack_point_pri = 69;
+optional SrcInfoPri pri_trace_src_info = 70;
+optional TaintQueryHypercall taint_query_hypercall = 38;
+optional AttackPoint attack_point = 39;
+optional TaintedBranch tainted_branch = 36;
+optional TaintedBranchSummary tainted_branch_summary = 72;
+optional TaintedInstr tainted_instr = 37;
+optional TaintedInstrSummary tainted_instr_summary = 56;
+
+}

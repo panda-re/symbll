@@ -67,7 +67,7 @@ if __name__ == "__main__":
     for message in read(sys.argv[1]):
         if i != 0: print ","
         if message.HasField('llvmEntry'):
-            print LLVMType(message.llvmEntry.type)
+            print "naseweis" #LLVMType(message.llvmEntry.type)
         jmsg = MessageToJson(message)
         print jmsg
         i += 1

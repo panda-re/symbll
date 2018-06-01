@@ -1,0 +1,223 @@
+<generator object read at 0x7f988bf891e0>
+pc: 18446744073709551615
+instr: 18446744073709551615
+
+pc: 3221354640
+instr: 0
+llvmEntry {
+  type: 44
+  tb_num: 1
+  flags: 0
+}
+
+44
+44
+('DEBUG:', <LLVMType.LLVM_FN: 44>, '==', <LLVMType.LLVM_FN: 44>)
+====== DEBUG: BB dump ======
+
+entry:
+  call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+  %1 = ptrtoint %struct.CPUARMState* %0 to i64, !host !0
+  %rrgic = load volatile i64* inttoptr (i64 140597161436424 to i64*), !host !1
+  call void @recordLoad(i8* inttoptr (i64 140597161436424 to i8*)), !host !2
+  %2 = add i64 %1, -20
+  %3 = inttoptr i64 %2 to i32*
+  %4 = bitcast i32* %3 to i8*
+  %tmp5_v = load i32* %3
+  call void @recordLoad(i8* %4), !host !2
+  %5 = icmp ne i32 %tmp5_v, 0
+  %6 = zext i1 %5 to i8
+  call void @recordBranch(i8 %6), !host !2
+  br i1 %5, label %16, label %7
+
+43
+43
+('DEBUG:', <LLVMType.BB: 43>, '==', <LLVMType.BB: 43>)
+instr :   call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+instr :   %1 = ptrtoint %struct.CPUARMState* %0 to i64, !host !0
+instr :   %rrgic = load volatile i64* inttoptr (i64 140597161436424 to i64*), !host !1
+20
+20
+('DEBUG:', <LLVMType.FUNC_CODE_INST_LOAD: 20>, '==', <LLVMType.FUNC_CODE_INST_LOAD: 20>)
+DEBUG: ignoring instruction tagged as rrupdate
+instr :   call void @recordLoad(i8* inttoptr (i64 140597161436424 to i8*)), !host !2
+instr :   %2 = add i64 %1, -20
+instr :   %3 = inttoptr i64 %2 to i32*
+instr :   %4 = bitcast i32* %3 to i8*
+instr :   %tmp5_v = load i32* %3
+20
+20
+('DEBUG:', <LLVMType.FUNC_CODE_INST_LOAD: 20>, '==', <LLVMType.FUNC_CODE_INST_LOAD: 20>)
+('DEBUG: that simplify thing returned', 33420)
+(33420, 'ARMCPU.parent_obj.tcg_exit_req')
+DEBUG: Found entry in CPU slot: ARMCPU.parent_obj.tcg_exit_req
+instr :   call void @recordLoad(i8* %4), !host !2
+instr :   %5 = icmp ne i32 %tmp5_v, 0
+instr :   %6 = zext i1 %5 to i8
+instr :   call void @recordBranch(i8 %6), !host !2
+instr :   br i1 %5, label %16, label %7
+11
+11
+('DEBUG:', <LLVMType.FUNC_CODE_INST_BR: 11>, '==', <LLVMType.FUNC_CODE_INST_BR: 11>)
+====== DEBUG: BB dump ======
+
+; <label>:16                                      ; preds = %entry
+  call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+  call void @recordReturn(), !host !2
+  ret i64 140596355272723
+
+43
+43
+('DEBUG:', <LLVMType.BB: 43>, '==', <LLVMType.BB: 43>)
+instr :   call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+instr :   call void @recordReturn(), !host !2
+instr :   ret i64 140596355272723
+10
+10
+('DEBUG:', <LLVMType.FUNC_CODE_INST_RET: 10>, '==', <LLVMType.FUNC_CODE_INST_RET: 10>)
+pc: 3221354640
+instr: 0
+llvmEntry {
+  type: 44
+  tb_num: 1
+  flags: 0
+}
+
+44
+44
+('DEBUG:', <LLVMType.LLVM_FN: 44>, '==', <LLVMType.LLVM_FN: 44>)
+====== DEBUG: BB dump ======
+
+entry:
+  call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+  %1 = ptrtoint %struct.CPUARMState* %0 to i64, !host !0
+  %rrgic = load volatile i64* inttoptr (i64 140597161436424 to i64*), !host !1
+  call void @recordLoad(i8* inttoptr (i64 140597161436424 to i8*)), !host !2
+  %2 = add i64 %1, -20
+  %3 = inttoptr i64 %2 to i32*
+  %4 = bitcast i32* %3 to i8*
+  %tmp5_v = load i32* %3
+  call void @recordLoad(i8* %4), !host !2
+  %5 = icmp ne i32 %tmp5_v, 0
+  %6 = zext i1 %5 to i8
+  call void @recordBranch(i8 %6), !host !2
+  br i1 %5, label %16, label %7
+
+43
+43
+('DEBUG:', <LLVMType.BB: 43>, '==', <LLVMType.BB: 43>)
+instr :   call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+instr :   %1 = ptrtoint %struct.CPUARMState* %0 to i64, !host !0
+instr :   %rrgic = load volatile i64* inttoptr (i64 140597161436424 to i64*), !host !1
+20
+20
+('DEBUG:', <LLVMType.FUNC_CODE_INST_LOAD: 20>, '==', <LLVMType.FUNC_CODE_INST_LOAD: 20>)
+DEBUG: ignoring instruction tagged as rrupdate
+instr :   call void @recordLoad(i8* inttoptr (i64 140597161436424 to i8*)), !host !2
+instr :   %2 = add i64 %1, -20
+instr :   %3 = inttoptr i64 %2 to i32*
+instr :   %4 = bitcast i32* %3 to i8*
+instr :   %tmp5_v = load i32* %3
+20
+20
+('DEBUG:', <LLVMType.FUNC_CODE_INST_LOAD: 20>, '==', <LLVMType.FUNC_CODE_INST_LOAD: 20>)
+('DEBUG: that simplify thing returned', 33420)
+(33420, 'ARMCPU.parent_obj.tcg_exit_req')
+DEBUG: Found entry in CPU slot: ARMCPU.parent_obj.tcg_exit_req
+instr :   call void @recordLoad(i8* %4), !host !2
+instr :   %5 = icmp ne i32 %tmp5_v, 0
+instr :   %6 = zext i1 %5 to i8
+instr :   call void @recordBranch(i8 %6), !host !2
+instr :   br i1 %5, label %16, label %7
+11
+11
+('DEBUG:', <LLVMType.FUNC_CODE_INST_BR: 11>, '==', <LLVMType.FUNC_CODE_INST_BR: 11>)
+====== DEBUG: BB dump ======
+
+; <label>:7                                       ; preds = %entry
+  call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+  store volatile i64 3221354640, i64* inttoptr (i64 140597111407408 to i64*), !host !3
+  store volatile i64 3221354640, i64* inttoptr (i64 140597161436432 to i64*), !host !3, !targetAsm !4
+  %rrgic1 = add i64 %rrgic, 1, !host !1
+  store volatile i64 %rrgic1, i64* inttoptr (i64 140597161436424 to i64*), !host !1
+  %8 = add i64 %1, 4
+  %r1_ptr = inttoptr i64 %8 to i32*
+  %r1_ptr7 = bitcast i32* %r1_ptr to i8*
+  %r1_v = load i32* %r1_ptr
+  call void @recordLoad(i8* %r1_ptr7), !host !2
+  %9 = add i64 %1, 0
+  %r0_ptr = inttoptr i64 %9 to i32*
+  %r0_ptr8 = bitcast i32* %r0_ptr to i8*
+  %r1_v9 = zext i32 %r1_v to i64
+  store i32 %r1_v, i32* %r0_ptr
+  call void @recordStore(i8* %r0_ptr8, i64 %r1_v9), !host !2
+  store volatile i64 3221354644, i64* inttoptr (i64 140597111407408 to i64*), !host !3
+  store volatile i64 3221354644, i64* inttoptr (i64 140597161436432 to i64*), !host !3, !targetAsm !4
+  %rrgic2 = add i64 %rrgic1, 1, !host !1
+  store volatile i64 %rrgic2, i64* inttoptr (i64 140597161436424 to i64*), !host !1
+  %10 = add i64 %1, 52
+  %r13_ptr = inttoptr i64 %10 to i32*
+  %r13_ptr10 = bitcast i32* %r13_ptr to i8*
+  %r13_v = load i32* %r13_ptr
+  call void @recordLoad(i8* %r13_ptr10), !host !2
+  %r13_v11 = inttoptr i32 %r13_v to i8*
+  call void @recordLoad(i8* %r13_v11)
+  %tmp6_v = call i32 @helper_le_ldul_mmu_panda(%struct.CPUARMState* %0, i32 %r13_v, i32 1, i64 3735928559)
+  %11 = add i64 %1, 44
+  %r11_ptr = inttoptr i64 %11 to i32*
+  %r11_ptr12 = bitcast i32* %r11_ptr to i8*
+  %tmp6_v13 = zext i32 %tmp6_v to i64
+  store i32 %tmp6_v, i32* %r11_ptr
+  call void @recordStore(i8* %r11_ptr12, i64 %tmp6_v13), !host !2
+  %tmp5_v3 = add i32 %r13_v, 4
+  %tmp5_v314 = inttoptr i32 %tmp5_v3 to i8*
+  call void @recordLoad(i8* %tmp5_v314)
+  %tmp6_v4 = call i32 @helper_le_ldul_mmu_panda(%struct.CPUARMState* %0, i32 %tmp5_v3, i32 1, i64 3735928559)
+  %tmp-7_v = and i32 %tmp6_v4, -2
+  %12 = add i64 %1, 60
+  %pc_ptr = inttoptr i64 %12 to i32*
+  %pc_ptr15 = bitcast i32* %pc_ptr to i8*
+  %tmp-7_v16 = zext i32 %tmp-7_v to i64
+  store i32 %tmp-7_v, i32* %pc_ptr
+  call void @recordStore(i8* %pc_ptr15, i64 %tmp-7_v16), !host !2
+  %tmp6_v5 = and i32 %tmp6_v4, 1
+  %13 = add i64 %1, 536
+  %14 = inttoptr i64 %13 to i32*
+  %15 = bitcast i32* %14 to i8*
+  %tmp6_v517 = zext i32 %tmp6_v5 to i64
+  store i32 %tmp6_v5, i32* %14
+  call void @recordStore(i8* %15, i64 %tmp6_v517), !host !2
+  %tmp5_v6 = add i32 %tmp5_v3, 4
+  %r13_ptr18 = bitcast i32* %r13_ptr to i8*
+  %tmp5_v619 = zext i32 %tmp5_v6 to i64
+  store i32 %tmp5_v6, i32* %r13_ptr
+  call void @recordStore(i8* %r13_ptr18, i64 %tmp5_v619), !host !2
+  call void @recordReturn(), !host !2
+  ret i64 0
+
+43
+43
+('DEBUG:', <LLVMType.BB: 43>, '==', <LLVMType.BB: 43>)
+instr :   call void @recordStartBB(i8* bitcast (i64 (%struct.CPUARMState*)* @tcg-llvm-tb-1-c001f890 to i8*), i64 1)
+instr :   store volatile i64 3221354640, i64* inttoptr (i64 140597111407408 to i64*), !host !3
+20
+24
+('ERROR: misaligned log. Have', <LLVMType.FUNC_CODE_INST_LOAD: 20>, 'expected', <LLVMType.FUNC_CODE_INST_STORE: 24>)
+Log entry:
+type: 20
+address: 140597161436468
+num_bytes: 4
+addr_type: 4
+cpustate_offset: 1
+
+Traceback (most recent call last):
+  File "symbll_old.py", line 245, in <module>
+    exec_function(mod, plog, f)
+  File "symbll_old.py", line 224, in exec_function
+    bb = exec_bb(mod, plog, bb, symbolic_locals)
+  File "symbll_old.py", line 176, in exec_bb
+    check(entry, LLVMType.FUNC_CODE_INST_STORE)
+  File "symbll_old.py", line 99, in check
+    raise AssertionError("entry.type != expected.value")
+AssertionError: entry.type != expected.value
+
