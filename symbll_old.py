@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import IPython
+#import IPython
 from z3 import *
 from llvm import *
 from llvm.core import *
