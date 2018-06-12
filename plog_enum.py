@@ -1,13 +1,9 @@
-<<<<<<< HEAD
 #!/usr/bin/env python
 
-=======
->>>>>>> 703836a77b7b2dc73db6cacb0575d154f5215e3a
 from enum import Enum
 
 class LLVMType(Enum):
     FUNC_CODE_DECLAREBLOCKS    =  1  # DECLAREBLOCKS: [n]
-<<<<<<< HEAD
     FUNC_CODE_INST_BINOP       =  2  # BINOP:      [opcode, $
     FUNC_CODE_INST_CAST        =  3  # CAST:       [opcode, $
     FUNC_CODE_INST_GEP         =  4  # GEP:        [n x oper$
@@ -59,7 +55,6 @@ class LLVMType(Enum):
                                      #        ordering  sync$
     FUNC_CODE_INST_STOREATOMIC = 42  # STORE: [ptrty,ptr,val$
                                      #         ordering  syn$
-=======
     FUNC_CODE_INST_BINOP       =  2  # BINOP:      [opcode, ty, opval, opval]
     FUNC_CODE_INST_CAST        =  3  # CAST:       [opcode, ty, opty, opval]
     FUNC_CODE_INST_GEP         =  4  # GEP:        [n x operands]
@@ -111,7 +106,6 @@ class LLVMType(Enum):
                                      #        ordering  synchscope]
     FUNC_CODE_INST_STOREATOMIC = 42  # STORE: [ptrty,ptr,val, align, vol
                                      #         ordering  synchscope]
->>>>>>> 703836a77b7b2dc73db6cacb0575d154f5215e3a
     BB = 43 
     LLVM_FN = 44 
     LLVM_EXCEPTION = 45
