@@ -14,7 +14,7 @@ import arm
 from arm_flat import *
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.debug('This is a log message.')
 
 logger = logging.getLogger()
@@ -69,6 +69,7 @@ def check(entry, expected):
         print  (previous_bb)
         raise AssertionError("entry.type != expected.value")
     else:
+        pass
         logger.info("DEBUG:",LLVMType(entry.type),"==",expected)
 
 def lookup_operand(operand, symbolic_locals):
@@ -126,14 +127,17 @@ def get_cpu_slot2(addr):
 def exec_bb(mod, plog, bb, symbolic_locals):
     global bb_counter 
     global previous_bb
-    logger.debug(bb_counter)
+    logger.warning(bb_counter)
     bb_counter = bb_counter + 1
+    print (bb_counter)
+    if bb_counter >= 1167:
+        print (bb)
     logger.debug("====== DEBUG: BB dump ======")
-    logger.debug(bb)
+    #print(bb)
     entry = plog.next().llvmEntry
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
-        logger.debug("instr : " + str(insn))
+        #print("instr : " + str(insn))
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
@@ -154,7 +158,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 host_ram[entry.address] = val
                 symbolic_locals[insn] = val
 
-            elif insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda') or insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
+            elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda') or insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
                 entry = plog.next().llvmEntry
                 symbolic_locals[insn] = entry.value
 
@@ -173,11 +177,12 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 symbolic_locals = symbolic_locals_preserved
                 try:
                     symbolic_locals[insn] = BitVecVal(retVal, insn.type.width)
-                except AttributeError: #return may have type VOID
+                except AttributeError: #return may have type VOID - should be verified in an assertion
                     pass
                 entry = plog.next().llvmEntry # fucntion call is recorded AFTER execution
             elif insn.called_function.name.startswith('llvm'):
                 symbolic_locals[insn] = BitVec('x', insn.type.width)
+                '''
                 print ("This is where we are:")
                 print ("insn:"+ str(insn))
                 print (bb_counter)
@@ -189,7 +194,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 print (plog.next().llvmEntry)
                 print (plog.next().llvmEntry)
                 print ("STOP!")
-                '''
+                
                 if insn.called_function.name.startswith('llvm.ctlzs'):
                     symbolic_locals[insn] == handleCTLZS(operand[1], insn.type.width)
                 elif insn.called_function.name.startswith('llvm.cttzs'):
@@ -354,19 +359,13 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         
         elif insn.opcode == OPCODE_SWITCH:
             entry = plog.next().llvmEntry
+            x = False
             for operand in insn.operands:
-                if (str(entry.condition) == str(operand)[-4:-2]):
-                    successor = operand
-                    break
-            '''
-            x = 0
-            for operand in insn.operands:
-                if x == 1:
+                if x == True:
                         successor = operand
-                        x = 0
+                        x = False
                 if (str(entry.condition) == str(operand)[-4:-2]):
-                        x = 1
-            '''
+                        x = True
 
         elif insn.opcode == OPCODE_BR:
             entry = plog.next().llvmEntry
@@ -476,8 +475,9 @@ def exec_function(mod, plog, func, *params): #chose *params over params = {}, as
 
 mod = Module.from_bitcode(file(sys.argv[1]))
 plog = plog_reader.read(sys.argv[2])
-logger.debug(plog)
-logger.debug(plog.next())
+#logger.debug(plog)
+#logger.debug(plog.next())
+plog.next()
 
 s = Solver()
 

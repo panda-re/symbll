@@ -1,2 +1,4 @@
 # ignore pyc files
 *.pyc
+# ignore dev tools
+function_finder.py
