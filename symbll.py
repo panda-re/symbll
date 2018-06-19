@@ -102,11 +102,11 @@ env = BitVec('env', 64)
 def get_cpu_slot(addr):
     try:
         offs = simplify(substitute(addr, (env, BitVecVal(arm.cpu_types['ARMCPU'][1]['env'][0], 64)))).as_signed_long()
-        print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
+        ###print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
         if (offs in offset_to_slot):# 
             return (offs, offset_to_slot[offs]) #return e.g. (33420, registername)
         else:
-            print (addr, offs)
+           ### print (addr, offs)
             raise ValueError("How can addr simplify to a number and not be a slot?")
     except:
         raise
@@ -114,7 +114,7 @@ def get_cpu_slot(addr):
 def get_cpu_slot2(addr):
     try:
         offs = simplify(substitute(addr, (env, BitVecVal(arm.cpu_types['ARMCPU'][1]['env'][0], 64)))).as_signed_long()
-        print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
+        ###print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
         if (offs in offset_to_slot):# 
             return (offs, offset_to_slot[offs]) #return e.g. (33420, registername)
         else:
@@ -130,18 +130,24 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     logger.warning(bb_counter)
     bb_counter = bb_counter + 1
     print (bb_counter)
-    if bb_counter >= 1167:
-        print (bb)
     logger.debug("====== DEBUG: BB dump ======")
     #print(bb)
     entry = plog.next().llvmEntry
+    if bb_counter >= 10000:
+        print (bb)
+        print (entry)
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
-        #print("instr : " + str(insn))
+        if (bb_counter >= 10000):
+            print("instr : " + str(insn))
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
             
+            elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda'):
+                entry = plog.next().llvmEntry
+                symbolic_locals[insn] = entry.value
+
             elif insn.called_function.name.startswith('helper_le_ld'):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_LOAD)
@@ -158,11 +164,22 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 host_ram[entry.address] = val
                 symbolic_locals[insn] = val
 
-            elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda') or insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
-                entry = plog.next().llvmEntry
-                symbolic_locals[insn] = entry.value
+            elif insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
+                # do not go in to fnction on LLVM side
+                # skip 3 entries on plog side
+                print ("FN")
+                print (plog.next)
+                print ("BB")
+                print (plog.next()) #bb
+                print ("LOAD")
+                print (plog.next())
+                print ("RETURN")
+                print (plog.next())
+                print ("CALL")
+                print (plog.next())
 
-            elif insn.called_function.name.startswith('helper_cpsr_read_llvm') or insn.called_function.name.startswith('helper_cpsr_write_llvm') or insn.called_function.name.startswith('cpsr_read') or insn.called_function.name.startswith('cpsr_write') or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') or insn.called_function.name.startswith('switch_mode'):
+
+            elif insn.called_function.name.startswith('helper_cpsr_read_llvm') or insn.called_function.name.startswith('helper_cpsr_write_llvm') or insn.called_function.name.startswith('cpsr_read') or insn.called_function.name.startswith('cpsr_write') or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') or insn.called_function.name.startswith('switch_mode') or insn.called_function.name.startswith('helper_shl_cc_llvm') or insn.called_function.name.startswith('helper_set_user_reg_llvm'):
                 symbolic_locals_preserved = symbolic_locals
                 subfunction = insn.called_function
                 parameters = [] # chose to use list over dict, as its sorted
@@ -241,8 +258,18 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 #cast to flattened format in Z3 type
                 symbolic_locals[insn] = arm.cpu_types['ARMCPU'][1]['env'][0] + symbolic_locals[insn]
                 symbolic_locals[insn] = BitVecVal(symbolic_locals[insn], 64)
-            else:
-                raise NotImplemented("This struct is undefined o.O what could it be?")
+            else: #<-- should assert type somehow
+                print (insn)
+                for o in insn.operands:
+                    print (o)
+                    #print (insn.type.width) // POINTER TYPE has no attribute WIDTH
+                    print (o.type)
+                symbolic_locals[insn] = BitVecVal(lookup_operand(insn.operands[1], symbolic_locals), 64)
+                #if insn.operands[0].type == "i8*":
+                #    print ("hi")
+
+            #else:
+                #raise NotImplemented("This struct is undefined o.O what could it be?")
         
         elif (insn.opcode == OPCODE_INTTOPTR or
               insn.opcode == OPCODE_BITCAST):
@@ -250,6 +277,24 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         
         elif insn.opcode == OPCODE_LOAD:
             entry = plog.next().llvmEntry
+            '''
+            if bb_counter >= 4906:
+                print (entry)
+                a = plog
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+                print (a.next())
+            '''
+                
             m = insn.get_metadata('host')
             if m and m.getOperand(0).getName() == 'rrupdate' or (m and m.getOperand(0).getName() == 'pcupdate'):
                 logger.debug("DEBUG: ignoring instruction tagged as rrupdate/ pcupdate")
@@ -449,6 +494,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     return successor, entry.value
 
 def exec_function(mod, plog, func, *params): #chose *params over params = {}, as it's sorted
+    print ("executed")
     symbolic_locals = {}
     bb = func.entry_basic_block
     for i in range(len(func.args)):
@@ -484,6 +530,7 @@ s = Solver()
 while True:
     try:
         entry = plog.next()
+        print ("next function")
     except StopIteration:
         break
     check(entry.llvmEntry, LLVMType.LLVM_FN)
