@@ -34,10 +34,11 @@ def exec_bb(mod, plog, bb):
                 print (insn.called_function.name)
                 print (insn.called_function)
             '''
-            if insn.called_function.name.startswith('record'):
+            function_name = insn.called_function.name
+            if function_name.startswith('record'):
                 pass
             else:
-                if insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
+                if function_name.startswith('helper_set_cp_reg_llvm'):
                     # do not go in to fnction on LLVM side
                     # skip 3 entries on plog side
                     while True:
@@ -46,25 +47,26 @@ def exec_bb(mod, plog, bb):
                         if entry.llvmEntry.type == 34: break
                     print (bb)
 
-                if insn.called_function.name not in list_defined_functions:
-                    if insn.called_function.name not in list_declared_functions:
-                        if insn.called_function.name:
-                            try:
-                                subfunction = insn.called_function
-                                exec_function(mod, plog, subfunction)
-                                list_defined_functions.append(insn.called_function)
-                            except:
-                                list_declared_functions.append(insn.called_function)
-                                plog.next()
-                        else:
-                            print (bb)
-                            print (insn)
-                            list_functionpointer.append(insn.name)
-                            print(plog.next())
-                            print(plog.next())
-                            print(plog.next())
-                            print(plog.next())
-                            print(plog.next())
+                else: 
+                    if function_name:
+                        try:
+                            subfunction = insn.called_function
+                            exec_function(mod, plog, subfunction) #breaks when it cannot get entry_bb, so if a function is only declared not defined
+                            if function_name not in list_defined_functions:
+                                list_defined_functions.append(function_name)
+                        except:
+                            plog.next()
+                            if function_name not in list_declared_functions:
+                               list_declared_functions.append(function_name)
+                    else:
+                        print (bb)
+                        print (insn)
+                        list_functionpointer.append(insn) #when a function does not have a name we save the instruction
+                        print(plog.next())
+                        print(plog.next())
+                        print(plog.next())
+                        print(plog.next())
+                        print(plog.next())
 
         if insn.opcode == OPCODE_BR:
             while True:
@@ -94,6 +96,26 @@ def exec_bb(mod, plog, bb):
                     #print (entry)
                     break
             successor = None
+            if bb_counter > 2000:
+                print ("Comprehensive Function List:")
+                print (list_defined_functions)
+                print (list_declared_functions)
+                print (list_functionpointer)
+                file = open("function_finder_results", "w")
+                file.write("Defined Functions:")
+                for l in list_defined_functions:
+                    file.write(l) 
+                    file.write("\n") 
+                file.write("Declared Functions:")
+                for l in list_declared_functions:
+                    file.write(l) 
+                    file.write("\n")
+                file.write("Function Pointers:")
+                for l in list_functionpointer:
+                    file.write(l) 
+                    file.write("\n")
+                file.close 
+                raise
         
         elif insn.opcode == OPCODE_SWITCH:
             while True:
@@ -102,12 +124,27 @@ def exec_bb(mod, plog, bb):
                     #print (insn)
                     #print (entry)
             x = False
-            for operand in insn.operands:
+            condition_str = str(entry.llvmEntry.condition)
+    
+            for i in range(len(insn.operands)):
+                #if i > 1 and i%2 == 0:
+                #print (insn.operands[i])
                 if x == True:
-                    successor = operand
-                    x = False
-                if (str(entry.llvmEntry.condition) == str(operand)[-4:-2]):
+                    successor = insn.operands[i]
+                    break
+                elif i > 1 and i%2 == 0 and condition_str == str(insn.operands[i])[-4:-2]:
                     x = True
+                #i = i+1
+            '''
+                for operand in insn.operands:
+                    print operand
+                    if x == True:
+                        successor = operand
+                        break
+                    elif condition_str == str(operand)[-4:-2]:
+                        x = True
+            '''
+            
         else:
             pass
             #print (insn)
@@ -137,6 +174,21 @@ while True:
 
 print ("Comprehensive Function List:")
 print (list_defined_functions)
+print (list_declared_functions)
+print (list_functionpointer)
+
+file = open("function_finder_results", "w")
+file.write("Defined Functions:")
+for l in list_defined_functions:
+    file.write(l) 
+    file.write(" \n") 
+file.write("Declared Functions:")
+for l in list_declared_functions:
+    file.write() 
+file.write("Function Pointers:")
+for l in list_functionpointer:
+    file.write(l) 
+file.close 
 
 '''
 enum{
