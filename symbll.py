@@ -1,18 +1,20 @@
 #!/usr/bin/env python
+# ls trace bb = 2375721
 
 #import IPython
 from z3 import *
 from llvm import *
 from llvm.core import *
 from collections import defaultdict
-import enum
-import sys
+#import enum
+#import sys
 import plog_reader
 #import i386 
 #from i386_flat import *
 import arm
 from arm_flat import *
 import logging
+import pdb
 
 logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.debug('This is a log message.')
@@ -26,6 +28,8 @@ for slot in ARMCPU_flat.keys():
 from plog_enum import LLVMType
 
 guest_ram = {}
+
+fs= [cpsr_read, helper_cpsr_read_llvm, cpsr_write, helper_cpsr_write_llvm, switch_mode, helper_cpsr_write_eret_llvm, helper_shl_cc_llvm, helper_set_user_reg_llvm, helper_get_user_reg_llvm, helper_vfp_get_fpscr_llvm, helper_shr_cc_llvm, helper_vfp_set_fpscr_llvm, helper_set_user_reg_llvm, raise_exception, helper_exception_with_syndrome_llvm]
 
 def handleCTLZS(operand):
     o1 = lookup_operand(operand, symbolic_locals)
@@ -143,20 +147,20 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
-            
+            '''
             elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda'):
                 entry = plog.next().llvmEntry
                 symbolic_locals[insn] = entry.value
-
-            elif insn.called_function.name.startswith('helper_le_ld'):
+            '''
+            elif insn.called_function.name.startswith('helper_le_ld') or insn.called_function.name.startswith('helper_ret_ld'):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_LOAD)
                 assert entry.addr_type == 2
-                asd = BitVecVal(entry.addr_type, 32)## should be VALUE of course, once its generated
+                asd = BitVecVal(entry.value, 32)## should be VALUE of course, once its generated
                 host_ram[entry.address] = asd #asentry.addr_type #should be value of course but value is not implemented yet
                 symbolic_locals[insn] = asd #entry.addr_type
             
-            elif insn.called_function.name.startswith('helper_le_st'):
+            elif insn.called_function.name.startswith('helper_le_st') or insn.called_function.name.startswith('helper_ret_st'):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_STORE)
                 assert entry.addr_type == 2
@@ -167,6 +171,9 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             elif insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
                 # do not go in to fnction on LLVM side
                 # skip 3 entries on plog side
+                '''print (previous_bb)
+                print (bb)
+                print (insn)
                 print ("FN")
                 print (plog.next)
                 print ("BB")
@@ -177,9 +184,43 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 print (plog.next())
                 print ("CALL")
                 print (plog.next())
+                print ("and")
+                print (plog.next())
+                print ("some")
+                print (plog.next())
+                print ("more")
+                print (plog.next())
+                raise
+                '''
+                #pdb.set_trace()
+                subfunction = insn.called_function
+                parameters = [] # chose to use list over dict, as its sorted
+                for i in range(len(insn.operands)):
+                    if (i == insn.operand_count-1): #the last operand is the called function itself
+                        continue
+                    if (i == 0): #assuming that the first param always is the env ptr
+                        parameters.append(env)
+                    elif i > 0:
+                        parameters.append(lookup_operand(insn.operands[i], symbolic_locals))
+                
+                retVal = exec_function(mod, plog, subfunction, *parameters)
+                print ("to late")
 
-
-            elif insn.called_function.name.startswith('helper_cpsr_read_llvm') or insn.called_function.name.startswith('helper_cpsr_write_llvm') or insn.called_function.name.startswith('cpsr_read') or insn.called_function.name.startswith('cpsr_write') or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') or insn.called_function.name.startswith('switch_mode') or insn.called_function.name.startswith('helper_shl_cc_llvm') or insn.called_function.name.startswith('helper_set_user_reg_llvm'):
+            elif insn.called_function.name.startswith('helper_cpsr_read_llvm') 
+              or insn.called_function.name.startswith('helper_cpsr_write_llvm') 
+              or insn.called_function.name.startswith('cpsr_read') 
+              or insn.called_function.name.startswith('cpsr_write') 
+              or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') 
+              or insn.called_function.name.startswith('switch_mode') 
+              or insn.called_function.name.startswith('helper_shl_cc_llvm') 
+              or insn.called_function.name.startswith('helper_shr_cc_llvm') 
+              or insn.called_function.name.startswith('helper_set_user_reg_llvm') 
+              or insn.called_function.name.startswith('helper_get_user_reg_llvm') 
+              or insn.called_function.name.startswith('helper_vfp_set_fpscr_llvm') 
+              or insn.called_function.name.startswith('helper_vfp_get_fpscr_llvm') 
+              or insn.called_function.name.startswith('raise_exception') 
+              or insn.called_function.name.startswith('helper_exception_with_syndrome_llvm'):
+                #pdb.set_trace()
                 symbolic_locals_preserved = symbolic_locals
                 subfunction = insn.called_function
                 parameters = [] # chose to use list over dict, as its sorted
@@ -403,6 +444,17 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             #assert symbolic_locals[insn].size() % 8 == 0 
         
         elif insn.opcode == OPCODE_SWITCH:
+            x = False
+            condition_str = str(entry.llvmEntry.condition)
+            for i in range(len(insn.operands)):
+                #if i > 1 and i%2 == 0:
+                #print (insn.operands[i])
+                if x == True:
+                    successor = insn.operands[i]
+                    break
+                elif i > 1 and i%2 == 0 and condition_str == str(insn.operands[i])[-4:-2]:
+                    x = True
+        ''' 
             entry = plog.next().llvmEntry
             x = False
             for operand in insn.operands:
@@ -411,7 +463,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                         x = False
                 if (str(entry.condition) == str(operand)[-4:-2]):
                         x = True
-
+        '''
         elif insn.opcode == OPCODE_BR:
             entry = plog.next().llvmEntry
             check(entry, LLVMType.FUNC_CODE_INST_BR)
@@ -477,6 +529,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             previous_bb = bb
             entry = plog.next().llvmEntry
             check(entry, LLVMType.FUNC_CODE_INST_RET)
+            return_value = lookup_operand[insn.opcodes[0], symbolic_locals]
             successor = None #Return should add sth to path_constraints?!
         
         else:
@@ -491,10 +544,9 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             logger.error(plog.next().llvmEntry)
             raise NotImplementedError("Pls implement this instr")
 
-    return successor, entry.value
+    return successor, return_value#entry.value
 
 def exec_function(mod, plog, func, *params): #chose *params over params = {}, as it's sorted
-    print ("executed")
     symbolic_locals = {}
     bb = func.entry_basic_block
     for i in range(len(func.args)):
@@ -530,7 +582,6 @@ s = Solver()
 while True:
     try:
         entry = plog.next()
-        print ("next function")
     except StopIteration:
         break
     check(entry.llvmEntry, LLVMType.LLVM_FN)
