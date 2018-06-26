@@ -45,7 +45,7 @@ def exec_bb(mod, plog, bb):
                         entry = plog.next()
                         #print (entry)
                         if entry.llvmEntry.type == 34: break
-                    print (bb)
+                    #print (bb)
 
                 else: 
                     if function_name:
@@ -96,26 +96,6 @@ def exec_bb(mod, plog, bb):
                     #print (entry)
                     break
             successor = None
-            if bb_counter > 2000:
-                print ("Comprehensive Function List:")
-                print (list_defined_functions)
-                print (list_declared_functions)
-                print (list_functionpointer)
-                file = open("function_finder_results", "w")
-                file.write("Defined Functions:")
-                for l in list_defined_functions:
-                    file.write(l) 
-                    file.write("\n") 
-                file.write("Declared Functions:")
-                for l in list_declared_functions:
-                    file.write(l) 
-                    file.write("\n")
-                file.write("Function Pointers:")
-                for l in list_functionpointer:
-                    file.write(l) 
-                    file.write("\n")
-                file.close 
-                raise
         
         elif insn.opcode == OPCODE_SWITCH:
             while True:
@@ -166,8 +146,6 @@ while True:
     try:
         entry = plog.next()
     except StopIteration:
-        print ("Comprehensive Function List:")
-        print (list_defined_functions)
         break
     f = mod.get_function_named('tcg-llvm-tb-%d-%x' % (entry.llvmEntry.tb_num, entry.pc)) 
     exec_function(mod, plog, f)
@@ -184,7 +162,7 @@ for l in list_defined_functions:
     file.write(" \n") 
 file.write("Declared Functions:")
 for l in list_declared_functions:
-    file.write() 
+    file.write(l) 
 file.write("Function Pointers:")
 for l in list_functionpointer:
     file.write(l) 
