@@ -1,2 +1,4 @@
 # ignore pyc files
 *.pyc
+function_finderv2.py
+*.save
