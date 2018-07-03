@@ -54,9 +54,12 @@ def unhandled_ram():
 host_ram = defaultdict(unhandled_ram)
 
 symbolic_cpu = {}
+initial_cpu_state = {}
 sorted_cpu = sorted(arm.cpu_types['CPUARMState'][1].items(), key=lambda item: item[1][0]) #unflattened ARM CPU but sorted so we can access via index as in GetElementPointer
 
 bb_counter = 0
+ret_counter = 0
+jmp_counter = 0
 previous_bb = 0 
 path_condition = []
 
@@ -96,6 +99,8 @@ def lookup_operand(operand, symbolic_locals):
 
 def lookup_cpu(slotname, numbits, symbolic_cpu):
     if not(slotname in symbolic_cpu):
+        if not(slotname in initial_cpu_state):
+            initial_cpu_state[slotname] = BitVec(slotname, numbits)
         symbolic_cpu[slotname] = BitVec(slotname, numbits)
     return symbolic_cpu[slotname]
 
@@ -128,6 +133,8 @@ def get_cpu_slot2(addr):
 
 def exec_bb(mod, plog, bb, symbolic_locals):
     global bb_counter 
+    global jmp_counter
+    global ret_counter
     global previous_bb
     logger.warning(bb_counter)
     bb_counter = bb_counter + 1
@@ -194,7 +201,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
               or insn.called_function.name.startswith('helper_get_user_reg_llvm') 
               or insn.called_function.name.startswith('helper_vfp_set_fpscr_llvm') 
               or insn.called_function.name.startswith('helper_vfp_get_fpscr_llvm') 
-              or insn.called_function.name.startswith('raise_exception') 
+              or insn.called_function.name.startswith('raise_exception') # Interrupt?!
               or insn.called_function.name.startswith('helper_exception_with_syndrome_llvm')):    
                 #pdb.set_trace()
                 symbolic_locals_preserved = symbolic_locals
@@ -310,9 +317,15 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                     (offs, slot_name) = cpu_slot
                     logger.debug("DEBUG: Found entry in CPU slot: %s" % slot_name)
                     try: #may fail for instruction type PointerVale (has no attribute width)
-                        symbolic_locals[insn] = lookup_cpu(slot_name, insn.type.width, symbolic_cpu)
+                        x = lookup_cpu(slot_name, insn.type.width, symbolic_cpu)
+                        #print (x) 
+                        #print (str(x))
+                        #print ("blob")
+                        symbolic_locals[insn] = BitVec(str(x),32)
                     except:
-                        symbolic_locals[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
+                        x = lookup_cpu(slot_name, 64, symbolic_cpu)
+                        symbolic_locals[insn] = BitVec(str(x),64)
+
                 else:
                     logger.debug("DEBUG: Didn't find %#x in the CPU, retrieving from host RAM" % entry.address)
                     symbolic_locals[insn] = host_ram[entry.address]
@@ -375,6 +388,10 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             o2 = lookup_operand(insn.operands[1], symbolic_locals)
             if insn.predicate == ICMP_NE:
                 res = (o1 != o2)
+                #print (res)
+                #print (bb)
+                #print (insn)
+                #raise
             elif insn.predicate == ICMP_EQ:
                 res = (o1 == o2)
             elif insn.predicate == ICMP_UGT:
@@ -391,7 +408,8 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 res = (o1 < o2)
             else:
                 raise NotImplemented("There are more predicates dum-dum")
-            symbolic_locals[insn] = If(res,BitVecVal(1,1),BitVecVal(0,1))
+            #symbolic_locals[insn] = If(res,BitVecVal(1,1),BitVecVal(0,1))
+            symbolic_locals[insn] = If(res, True, False)
         
         elif insn.opcode == OPCODE_SEXT:
             o1 = lookup_operand(insn.operands[0], symbolic_locals)
@@ -402,7 +420,10 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         elif insn.opcode == OPCODE_ZEXT:
             o1 = lookup_operand(insn.operands[0], symbolic_locals)
             if (type(o1) == long): o1 = BitVecVal(o1, 32) #type long needs special treatment, has no attribute size()
-            symbolic_locals[insn] = ZeroExt(insn.type.width-o1.size(), o1)
+            try:
+                symbolic_locals[insn] = ZeroExt(insn.type.width-o1.size(), o1)
+            except:
+                pass
             #assert symbolic_locals[insn].size() % 8 == 0 
         
         elif insn.opcode == OPCODE_SWITCH:
@@ -432,9 +453,18 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             check(entry, LLVMType.FUNC_CODE_INST_BR)
             if (entry.condition == 111): #BR has condition 111 when used like JMP
                 successor = insn.operands[0]
+                jmp_counter += 1
             else:
-                successor = insn.operands[1 + entry.condition]
-                path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
+                print (insn)
+                print (entry.condition)
+                print (lookup_operand(insn.operands[0], symbolic_locals))
+                if entry.condition == 0:
+                    successor = insn.operands[1 + entry.condition]
+                    path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
+                elif entry.condition == 1:
+                    successor = insn.operands[1 + entry.condition]
+                    #path_condition.append(Not(lookup_operand(insn.operands[0], symbolic_locals)))
+                    path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
             previous_bb = bb
             r = 0
         
@@ -490,22 +520,17 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             symbolic_locals[insn] = (x ^ y)
 
         elif insn.opcode == OPCODE_RET:
+            ret_counter += 1
             previous_bb = bb
             entry = plog.next().llvmEntry
             check(entry, LLVMType.FUNC_CODE_INST_RET)
             successor = None #Return should add sth to path_constraints?!
-            #print (insn)
-            #print (dir(insn))
-            #print (dir(insn.operands[0]))
-            #print (insn.type)
-            #print (insn.operands[0].s_ext_value)
             try:
                 r = insn.operands[0].s_ext_value
             except:
                 for o in insn.operands:
                     print (o)
 
-                #print (symbolic_locals[insn])
                 try:
                     print (symbolic_locals[insn.operands[0]])
                     r = lookup_operand(insn.operands[0], symbolic_locals)
@@ -557,14 +582,30 @@ plog = plog_reader.read(sys.argv[2])
 #logger.debug(plog.next())
 plog.next()
 
-s = Solver()
-
 while True:
+    if bb_counter > 10:
+        print (len(path_condition))
+        print (ret_counter)
+        print (jmp_counter)
+        for con in path_condition:
+            print (con)
+        break
     try:
-        entry = plog.next()
-        print ("next function")
+        entry = plog.next()#
     except StopIteration:
         break
     check(entry.llvmEntry, LLVMType.LLVM_FN)
     f = mod.get_function_named('tcg-llvm-tb-%d-%x' % (entry.llvmEntry.tb_num, entry.pc))
     exec_function(mod, plog, f, f.args[0])
+
+s = Solver()
+
+for con in path_condition:
+    s.add(con)
+    print (con)
+    print (s.check())
+    if s.check() == sat:
+        print (s.model())
+
+
+print ("run successful")
