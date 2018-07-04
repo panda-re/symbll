@@ -58,8 +58,6 @@ initial_cpu_state = {}
 sorted_cpu = sorted(arm.cpu_types['CPUARMState'][1].items(), key=lambda item: item[1][0]) #unflattened ARM CPU but sorted so we can access via index as in GetElementPointer
 
 bb_counter = 0
-ret_counter = 0
-jmp_counter = 0
 previous_bb = 0 
 path_condition = []
 
@@ -133,8 +131,6 @@ def get_cpu_slot2(addr):
 
 def exec_bb(mod, plog, bb, symbolic_locals):
     global bb_counter 
-    global jmp_counter
-    global ret_counter
     global previous_bb
     logger.warning(bb_counter)
     bb_counter = bb_counter + 1
@@ -142,13 +138,14 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     logger.debug("====== DEBUG: BB dump ======")
     #print(bb)
     entry = plog.next().llvmEntry
-    if bb_counter >= 10000:
-        print (bb)
-  #      print (entry)
+    #if bb_counter >= 10000:
+    #    print (bb)
+    #    print (entry)
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
-        if (bb_counter >= 10000):
-            print("instr : " + str(insn))
+        #if (bb_counter >= 10000):
+        #    print("instr : " + str(insn))
+
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
@@ -287,11 +284,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 symbolic_locals[insn] = arm.cpu_types['ARMCPU'][1]['env'][0] + symbolic_locals[insn]
                 symbolic_locals[insn] = BitVecVal(symbolic_locals[insn], 64)
             else: #<-- should assert type somehow
-                print (insn)
-                for o in insn.operands:
-                    print (o)
-                    #print (insn.type.width) // POINTER TYPE has no attribute WIDTH
-                    print (o.type)
                 symbolic_locals[insn] = BitVecVal(lookup_operand(insn.operands[1], symbolic_locals), 64)
                 #if insn.operands[0].type == "i8*":
                 #    print ("hi")
@@ -453,7 +445,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             check(entry, LLVMType.FUNC_CODE_INST_BR)
             if (entry.condition == 111): #BR has condition 111 when used like JMP
                 successor = insn.operands[0]
-                jmp_counter += 1
             else:
                 print (insn)
                 print (entry.condition)
@@ -520,7 +511,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             symbolic_locals[insn] = (x ^ y)
 
         elif insn.opcode == OPCODE_RET:
-            ret_counter += 1
             previous_bb = bb
             entry = plog.next().llvmEntry
             check(entry, LLVMType.FUNC_CODE_INST_RET)
@@ -583,13 +573,6 @@ plog = plog_reader.read(sys.argv[2])
 plog.next()
 
 while True:
-    if bb_counter > 10:
-        print (len(path_condition))
-        print (ret_counter)
-        print (jmp_counter)
-        for con in path_condition:
-            print (con)
-        break
     try:
         entry = plog.next()#
     except StopIteration:
@@ -599,10 +582,18 @@ while True:
     exec_function(mod, plog, f, f.args[0])
 
 s = Solver()
-
+file = open("symbll_results\n", "w")
+file.write("Processed BBs:\n")
+file.write(bb_counter)
+file.write("Path Constraints:\n")
 for con in path_condition:
-    s.add(con)
-    print (con)
+    file.write(con) 
+    file.write("\n") 
+file.close 
+
+for i in range(100):
+    s.add(path_condition[i])
+    print (path_condition[i])
     print (s.check())
     if s.check() == sat:
         print (s.model())
