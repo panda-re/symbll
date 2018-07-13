@@ -171,7 +171,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
 
                 #Function Pointer/ Dynamic Function calls are now supported
                 #Thanks to Ray Wang
-S
                 #pdb.set_trace()
 
                 print ("FN")
