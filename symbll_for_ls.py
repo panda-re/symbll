@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# ls trace bb = 2375721
 
 #import IPython
 from z3 import *
@@ -13,6 +14,7 @@ import plog_reader
 import arm
 from arm_flat import *
 import logging
+import pdb
 
 logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 logging.debug('This is a log message.')
@@ -52,6 +54,7 @@ def unhandled_ram():
 host_ram = defaultdict(unhandled_ram)
 
 symbolic_cpu = {}
+initial_cpu_state = {}
 sorted_cpu = sorted(arm.cpu_types['CPUARMState'][1].items(), key=lambda item: item[1][0]) #unflattened ARM CPU but sorted so we can access via index as in GetElementPointer
 
 bb_counter = 0
@@ -94,6 +97,8 @@ def lookup_operand(operand, symbolic_locals):
 
 def lookup_cpu(slotname, numbits, symbolic_cpu):
     if not(slotname in symbolic_cpu):
+        if not(slotname in initial_cpu_state):
+            initial_cpu_state[slotname] = BitVec(slotname, numbits)
         symbolic_cpu[slotname] = BitVec(slotname, numbits)
     return symbolic_cpu[slotname]
 
@@ -133,30 +138,31 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     logger.debug("====== DEBUG: BB dump ======")
     #print(bb)
     entry = plog.next().llvmEntry
-    if bb_counter >= 10000:
-        print (bb)
-        print (entry)
+    #if bb_counter >= 10000:
+    #    print (bb)
+    #    print (entry)
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
-        if (bb_counter >= 10000):
-            print("instr : " + str(insn))
+        #if (bb_counter >= 10000):
+        #    print("instr : " + str(insn))
+
         if insn.opcode == OPCODE_CALL:
             if insn.called_function.name.startswith('record'):
                 pass
             
-            elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda'):
-                entry = plog.next().llvmEntry
-                symbolic_locals[insn] = entry.value
+            #elif insn.called_function.name.startswith('helper_le_stl_mmu_panda') or insn.called_function.name.startswith('helper_le_ldul_mmu_panda') or insn.called_function.name.startswith('helper_ret_ldub_mmu_panda') or insn.called_function.name.startswith('helper_ret_stb_mmu_panda'):
+            #    entry = plog.next().llvmEntry
+            #    symbolic_locals[insn] = entry.value
 
-            elif insn.called_function.name.startswith('helper_le_ld'):
+            elif insn.called_function.name.startswith('helper_le_ld') or insn.called_function.name.startswith('helper_ret_ld'):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_LOAD)
                 assert entry.addr_type == 2
-                asd = BitVecVal(entry.addr_type, 32)## should be VALUE of course, once its generated
-                host_ram[entry.address] = asd #asentry.addr_type #should be value of course but value is not implemented yet
-                symbolic_locals[insn] = asd #entry.addr_type
+                asd = BitVecVal(entry.value, 32)
+                host_ram[entry.address] = asd
+                symbolic_locals[insn] = asd
             
-            elif insn.called_function.name.startswith('helper_le_st'):
+            elif insn.called_function.name.startswith('helper_le_st') or insn.called_function.name.startswith('helper_ret_st'):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_STORE)
                 assert entry.addr_type == 2
@@ -165,11 +171,13 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 symbolic_locals[insn] = val
 
             elif insn.called_function.name.startswith('helper_set_cp_reg_llvm'):
+                # contains function pointer
                 # do not go in to fnction on LLVM side
                 # skip 3 entries on plog side
                 print (previous_bb)
                 print (bb)
                 print (insn)
+
                 print ("FN")
                 print (plog.next)
                 print ("BB")
@@ -188,7 +196,21 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 #print (plog.next())
 
 
-            elif insn.called_function.name.startswith('helper_cpsr_read_llvm') or insn.called_function.name.startswith('helper_cpsr_write_llvm') or insn.called_function.name.startswith('cpsr_read') or insn.called_function.name.startswith('cpsr_write') or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') or insn.called_function.name.startswith('switch_mode') or insn.called_function.name.startswith('helper_shl_cc_llvm') or insn.called_function.name.startswith('helper_set_user_reg_llvm'):
+            elif (insn.called_function.name.startswith('helper_cpsr_read_llvm') 
+              or insn.called_function.name.startswith('helper_cpsr_write_llvm') 
+              or insn.called_function.name.startswith('cpsr_read') 
+              or insn.called_function.name.startswith('cpsr_write') 
+              or insn.called_function.name.startswith('helper_cpsr_write_eret_llvm') 
+              or insn.called_function.name.startswith('switch_mode') 
+              or insn.called_function.name.startswith('helper_shl_cc_llvm') 
+              or insn.called_function.name.startswith('helper_shr_cc_llvm') 
+              or insn.called_function.name.startswith('helper_set_user_reg_llvm') 
+              or insn.called_function.name.startswith('helper_get_user_reg_llvm') 
+              or insn.called_function.name.startswith('helper_vfp_set_fpscr_llvm') 
+              or insn.called_function.name.startswith('helper_vfp_get_fpscr_llvm') 
+              or insn.called_function.name.startswith('raise_exception') # Interrupt?!
+              or insn.called_function.name.startswith('helper_exception_with_syndrome_llvm')):    
+                #pdb.set_trace()
                 symbolic_locals_preserved = symbolic_locals
                 subfunction = insn.called_function
                 parameters = [] # chose to use list over dict, as its sorted
@@ -201,11 +223,15 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                         parameters.append(lookup_operand(insn.operands[i], symbolic_locals))
                 retVal = exec_function(mod, plog, subfunction, *parameters)
                 symbolic_locals = symbolic_locals_preserved
-                try:
+                try: 
                     symbolic_locals[insn] = BitVecVal(retVal, insn.type.width)
-                except AttributeError: #return may have type VOID - should be verified in an assertion
-                    pass
+                except:
+                    try:
+                        symbolic_locals[insn] = retVal
+                    except AttributeError: #return may have type VOID - should be verified in an assertion
+                        pass
                 entry = plog.next().llvmEntry # fucntion call is recorded AFTER execution
+            
             elif insn.called_function.name.startswith('llvm'):
                 symbolic_locals[insn] = BitVec('x', insn.type.width)
                 '''
@@ -268,11 +294,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 symbolic_locals[insn] = arm.cpu_types['ARMCPU'][1]['env'][0] + symbolic_locals[insn]
                 symbolic_locals[insn] = BitVecVal(symbolic_locals[insn], 64)
             else: #<-- should assert type somehow
-                print (insn)
-                for o in insn.operands:
-                    print (o)
-                    #print (insn.type.width) // POINTER TYPE has no attribute WIDTH
-                    print (o.type)
                 symbolic_locals[insn] = BitVecVal(lookup_operand(insn.operands[1], symbolic_locals), 64)
                 #if insn.operands[0].type == "i8*":
                 #    print ("hi")
@@ -286,24 +307,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         
         elif insn.opcode == OPCODE_LOAD:
             entry = plog.next().llvmEntry
-            '''
-            if bb_counter >= 4906:
-                print (entry)
-                a = plog
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-                print (a.next())
-            '''
-                
             m = insn.get_metadata('host')
             if m and m.getOperand(0).getName() == 'rrupdate' or (m and m.getOperand(0).getName() == 'pcupdate'):
                 logger.debug("DEBUG: ignoring instruction tagged as rrupdate/ pcupdate")
@@ -316,9 +319,15 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                     (offs, slot_name) = cpu_slot
                     logger.debug("DEBUG: Found entry in CPU slot: %s" % slot_name)
                     try: #may fail for instruction type PointerVale (has no attribute width)
-                        symbolic_locals[insn] = lookup_cpu(slot_name, insn.type.width, symbolic_cpu)
+                        x = lookup_cpu(slot_name, insn.type.width, symbolic_cpu)
+                        #print (x) 
+                        #print (str(x))
+                        #print ("blob")
+                        symbolic_locals[insn] = BitVec(str(x),32)
                     except:
-                        symbolic_locals[insn] = lookup_cpu(slot_name, 64, symbolic_cpu)
+                        x = lookup_cpu(slot_name, 64, symbolic_cpu)
+                        symbolic_locals[insn] = BitVec(str(x),64)
+
                 else:
                     logger.debug("DEBUG: Didn't find %#x in the CPU, retrieving from host RAM" % entry.address)
                     symbolic_locals[insn] = host_ram[entry.address]
@@ -381,6 +390,10 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             o2 = lookup_operand(insn.operands[1], symbolic_locals)
             if insn.predicate == ICMP_NE:
                 res = (o1 != o2)
+                #print (res)
+                #print (bb)
+                #print (insn)
+                #raise
             elif insn.predicate == ICMP_EQ:
                 res = (o1 == o2)
             elif insn.predicate == ICMP_UGT:
@@ -397,7 +410,8 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 res = (o1 < o2)
             else:
                 raise NotImplemented("There are more predicates dum-dum")
-            symbolic_locals[insn] = If(res,BitVecVal(1,1),BitVecVal(0,1))
+            #symbolic_locals[insn] = If(res,BitVecVal(1,1),BitVecVal(0,1))
+            symbolic_locals[insn] = If(res, True, False)
         
         elif insn.opcode == OPCODE_SEXT:
             o1 = lookup_operand(insn.operands[0], symbolic_locals)
@@ -408,18 +422,33 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         elif insn.opcode == OPCODE_ZEXT:
             o1 = lookup_operand(insn.operands[0], symbolic_locals)
             if (type(o1) == long): o1 = BitVecVal(o1, 32) #type long needs special treatment, has no attribute size()
-            symbolic_locals[insn] = ZeroExt(insn.type.width-o1.size(), o1)
+            try:
+                symbolic_locals[insn] = ZeroExt(insn.type.width-o1.size(), o1)
+            except:
+                pass
             #assert symbolic_locals[insn].size() % 8 == 0 
         
         elif insn.opcode == OPCODE_SWITCH:
             entry = plog.next().llvmEntry
             x = False
-            for operand in insn.operands:
+            condition_str = str(entry.condition)
+            for i in range(len(insn.operands)):
+                #if i > 1 and i%2 == 0:
+                #print (insn.operands[i])
                 if x == True:
-                        successor = operand
-                        x = False
-                if (str(entry.condition) == str(operand)[-4:-2]):
-                        x = True
+                    successor = insn.operands[i]
+                    break
+                elif i > 1 and i%2 == 0 and condition_str == str(insn.operands[i])[-4:-2]:
+                    x = True
+            r = 0
+
+           # x = False
+           # for operand in insn.operands:
+           #     if x == True:
+           #             successor = operand
+           #             x = False
+           #     if (str(entry.condition) == str(operand)[-4:-2]):
+           #             x = True
 
         elif insn.opcode == OPCODE_BR:
             entry = plog.next().llvmEntry
@@ -427,9 +456,18 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             if (entry.condition == 111): #BR has condition 111 when used like JMP
                 successor = insn.operands[0]
             else:
-                successor = insn.operands[1 + entry.condition]
-                path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
+                print (insn)
+                print (entry.condition)
+                print (lookup_operand(insn.operands[0], symbolic_locals))
+                if entry.condition == 0:
+                    successor = insn.operands[1 + entry.condition]
+                    path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
+                elif entry.condition == 1:
+                    successor = insn.operands[1 + entry.condition]
+                    #path_condition.append(Not(lookup_operand(insn.operands[0], symbolic_locals)))
+                    path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
             previous_bb = bb
+            r = 0
         
         elif insn.opcode == OPCODE_PHI:
             for i in range(insn.incoming_count):
@@ -487,7 +525,17 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             entry = plog.next().llvmEntry
             check(entry, LLVMType.FUNC_CODE_INST_RET)
             successor = None #Return should add sth to path_constraints?!
-        
+            try:
+                r = insn.operands[0].s_ext_value
+            except:
+                for o in insn.operands:
+                    print (o)
+
+                try:
+                    print (symbolic_locals[insn.operands[0]])
+                    r = lookup_operand(insn.operands[0], symbolic_locals)
+                except:
+                    r = 0
         else:
             logger.error("insn:"+ str(insn))
             logger.error(bb_counter)
@@ -500,7 +548,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             logger.error(plog.next().llvmEntry)
             raise NotImplementedError("Pls implement this instr")
 
-    return successor, entry.value
+    return successor, r#insn.operands[0].s_ext_value#entry.value #lookup_operand(insn.operands[0],symbolic_locals)
 
 def exec_function(mod, plog, func, *params): #chose *params over params = {}, as it's sorted
     #print ("executed")
@@ -534,12 +582,9 @@ plog = plog_reader.read(sys.argv[2])
 #logger.debug(plog.next())
 plog.next()
 
-s = Solver()
-
 while True:
     try:
         entry = plog.next()
-        #print ("next function")
     except StopIteration:
         break
     check(entry.llvmEntry, LLVMType.LLVM_FN)

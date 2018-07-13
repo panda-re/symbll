@@ -4,3 +4,5 @@
 function_finder.py
 #ignore testcase/ directory - it has (to) large files
 testcase
+function_finderv2.py
+*.save
