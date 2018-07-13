@@ -2,3 +2,5 @@
 *.pyc
 # ignore dev tools
 function_finder.py
+#ignore testcase/ directory - it has (to) large files
+testcase
