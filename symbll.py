@@ -106,13 +106,14 @@ def lookup_operand(operand, symbolic_locals): # gets operand from symbolic_local
 
 def get_cpu_slot(addr): # returns the according register name to a given offset
     try:
+        # z3.substitute replaces manipulates addr by replacing all occurences of env by the envptr address
+        # addr has format (env+x)
+        # env is replaced by env's address
+        # (3340 + x) is received
+        # simplify solves this
         offs = simplify(substitute(addr, (env, BitVecVal(arm.cpu_types['ARMCPU'][1]['env'][0], 64)))).as_signed_long()
-        ###print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
         if (offs in offset_to_slot):# 
             return (offs, offset_to_slot[offs]) #return e.g. (33420, registername)
-        else:
-           ### print (addr, offs)
-           raise ValueError("How can addr simplify to a number and not be a slot?")
     except:
         raise
 
@@ -124,20 +125,6 @@ def lookup_cpu(slotname, numbits, symbolic_cpu): # returns the accorting value t
 CONST_REGISTER_SIZE = 64
 env = BitVec('env', CONST_REGISTER_SIZE)
 
-
-
-def get_cpu_slot2(addr):
-    try:
-        offs = simplify(substitute(addr, (env, BitVecVal(arm.cpu_types['ARMCPU'][1]['env'][0], 64)))).as_signed_long()
-        ###print ("DEBUG: that simplify thing returned", offs) #e.g. offs = 33420
-        if (offs in offset_to_slot):# 
-            return (offs, offset_to_slot[offs]) #return e.g. (33420, registername)
-        else:
-            return # for STORE instructions offs always simplifies to a number -> the address
-            #actually, we can cut out the whole simplify thing and just lookup the address...
-            #raise ValueError("How can addr simplify to a number and not be a slot?")
-    except:
-        raise
 
 def exec_bb(mod, plog, bb, symbolic_locals):
     global bb_counter 
@@ -337,7 +324,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 #assert entry.address % 8 == 0 # this doesnt seem to work ... 
                 addr = BitVecVal(entry.address, CONST_REGISTER_SIZE) # shorter would cut the address off
                 
-                cpu_slot = get_cpu_slot2(addr)
+                cpu_slot = get_cpu_slot(addr)
 
                 # STORE can access MEMORY or CPU Registers
                 # Validate if accessed address belongs to CPU register (IF)
