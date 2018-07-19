@@ -19,13 +19,10 @@ import pdb
 
 # TO DO :
 ## Put Store helper and Load helper together
-## Put get_cpu_slot 1 and 2 together
 ## Make concrete CPU the right format
-## Remove lookup_cpu function 
 ## Can we remove SOTREs to CPU registers?
 ## is env ptr == concrete cpu?! - damn it's late
 ## we do not zext/sext some values - does this cause any trouble?
-## Should RET add sth to path_constraints?!
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
@@ -44,6 +41,21 @@ def handleCTLZS(operand):
         if operand[:i] == 0: 
             return BitvecVal(i, o1.size()) 
 '''
+host_ram = defaultdict(unhandled_ram)
+
+initial_cpu_state = {}
+symbolic_cpu = {}
+concrete_cpu = {}
+sorted_cpu = sorted(arm.cpu_types['CPUARMState'][1].items(), key=lambda item: item[1][0]) #unflattened ARM CPU but sorted so we can access via index as in GetElementPointer
+
+path_condition = []
+
+bb_counter = 0
+previous_bb = 0 # crucial for LLVM SELECT instruction
+
+CONST_REGISTER_SIZE = 64
+env = BitVec('env', CONST_REGISTER_SIZE)
+
 
 def initialize_to(plog, addr): #fast forward the plog to the desired memory address
     while True:
@@ -57,18 +69,6 @@ def initialize_to(plog, addr): #fast forward the plog to the desired memory addr
 def unhandled_ram():
     print ("WARNING: returning nonsense for unhandled RAM read")
     return 0xdeadbeefdeadbeef
-
-host_ram = defaultdict(unhandled_ram)
-
-initial_cpu_state = {}
-symbolic_cpu = {}
-concrete_cpu = {}
-sorted_cpu = sorted(arm.cpu_types['CPUARMState'][1].items(), key=lambda item: item[1][0]) #unflattened ARM CPU but sorted so we can access via index as in GetElementPointer
-
-path_condition = []
-
-bb_counter = 0
-previous_bb = 0 # crucial for LLVM SELECT instruction
 
 def check(entry, expected): # verifies that plog and LLVM are in sync
     if entry.type != expected.value:
@@ -117,15 +117,6 @@ def get_cpu_slot(addr): # returns the according register name to a given offset
     except:
         raise
 
-def lookup_cpu(slotname, numbits, symbolic_cpu): # returns the accorting value to a given register name
-    if not(slotname in symbolic_cpu):
-        symbolic_cpu[slotname] = BitVec(slotname, numbits)
-    return symbolic_cpu[slotname]
-
-CONST_REGISTER_SIZE = 64
-env = BitVec('env', CONST_REGISTER_SIZE)
-
-
 def exec_bb(mod, plog, bb, symbolic_locals):
     global bb_counter 
     global previous_bb
@@ -146,11 +137,9 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         #if (bb_counter >= 10000):
         print("instr : " + str(insn))
 
-
-
 ##########################
 ##########################
-######## Memory  #########
+######## Memory ##########
 ######## Access ##########
 ##########################
 ##########################
