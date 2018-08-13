@@ -18,7 +18,6 @@ import pdb
 
 
 # TO DO :
-## Put Store helper and Load helper together
 ## Make concrete CPU the right format
 ## Can we remove SOTREs to CPU registers?
 ## is env ptr == concrete cpu?! - damn it's late
@@ -41,7 +40,7 @@ def handleCTLZS(operand):
         if operand[:i] == 0: 
             return BitvecVal(i, o1.size()) 
 '''
-host_ram = defaultdict(unhandled_ram)
+
 
 initial_cpu_state = {}
 symbolic_cpu = {}
@@ -69,6 +68,7 @@ def initialize_to(plog, addr): #fast forward the plog to the desired memory addr
 def unhandled_ram():
     print ("WARNING: returning nonsense for unhandled RAM read")
     return 0xdeadbeefdeadbeef
+host_ram = defaultdict(unhandled_ram)
 
 def check(entry, expected): # verifies that plog and LLVM are in sync
     if entry.type != expected.value:
@@ -148,8 +148,11 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             if insn.called_function.name.startswith('record'):
                 pass
 
-            # handle LOAD helpers
-            elif insn.called_function.name.startswith('helper_le_ld') or insn.called_function.name.startswith('helper_ret_ld'):
+            # handle LOAD helpers and STORE helpers
+            # we can handle LOAD and STORE the SAME way
+            # The plog entry is the single point of truth for the LOADED/STORED value
+            # we may want to keep host_ram for assertion though
+            elif (insn.called_function.name.startswith('helper_le_ld') or insn.called_function.name.startswith('helper_ret_ld')):
                 entry = plog.next().llvmEntry
                 check (entry, LLVMType.FUNC_CODE_INST_LOAD)
                 assert entry.addr_type == 2
@@ -190,7 +193,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             #    print (plog.next())
 
 
-            #handle functions that to not expect the env ptr as parameter
+            #handle functions that do not expect the env ptr as parameter
             elif (insn.called_function.name.startswith('helper_udiv_llvm')
               or insn.called_function.name.startswith('helper_rbit_llvm')):
                 #pdb.set_trace()
@@ -206,7 +209,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 try: 
                     symbolic_locals[insn] = BitVecVal(retVal, insn.type.width)
                 except:
-                    print ("hallo")
                     try:
                         symbolic_locals[insn] = retVal
                     except AttributeError: #return may have type VOID - should be verified in an assertion
@@ -288,18 +290,24 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                         initial_cpu_state[slot_name] = entry.value #holding the initial state so it can later be exported/ reused for subsequent runs
                     
                     # save value as both, concrete and symbolic
-                    concrete_cpu[slot_name] = entry.value
+                    concrete_cpu[slot_name] = BitVecVal(entry.value, insn.type.width)
                     symbolic_cpu[slot_name] = BitVec(slot_name,insn.type.width) #holding the current state, so it's accessable at any time
                     # make part of the exectution symbolic
                     # and the other part concrete                    
-                    if offs > 0:
+                    if offs == 0:
                         symbolic_locals[insn] = symbolic_cpu[slot_name]
                     else:
                         symbolic_locals[insn] = concrete_cpu[slot_name]
                         # To Do : concre value should be  the correct type - otherwise causes issues
                 else:
                     logger.debug("DEBUG: Didn't find %#x in the CPU, retrieving from host RAM" % entry.address)
-                    symbolic_locals[insn] = host_ram[entry.address]
+                    if (entry.address > 536871373 and entry.address < 536871473):
+                        try:
+                            symbolic_locals[insn] = host_ram[entry.address]
+                        except:
+                            symbolic_locals[insn] = BitVec(entry.address, insn.type.width)
+                    else:
+                        symbolic_locals[insn] = BitVecVal(entry.value, insn.type.width)
 
         elif insn.opcode == OPCODE_STORE:
             m = insn.get_metadata('host')
@@ -544,12 +552,19 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             # False case: add neglected condition    
                 successor = insn.operands[1 + entry.condition]
                 operand = lookup_operand(insn.operands[0], symbolic_locals)
-                inverted_operand = Not(operand)
-                path_condition.append(inverted_operand)
+                if isinstance(operand,BitVecNumRef):
+                    pass
+                else:
+                    inverted_operand = Not(operand)
+                    path_condition.append(inverted_operand)
             elif entry.condition == 1:
             # True case: add condition
                 successor = insn.operands[1 + entry.condition]
-                path_condition.append(lookup_operand(insn.operands[0], symbolic_locals))
+                operand = lookup_operand(insn.operands[0], symbolic_locals)
+                if isinstance(operand,BitVecNumRef):
+                    pass
+                else:
+                    path_condition.append(operand)
             previous_bb = bb
             r = 0
 
@@ -680,7 +695,7 @@ file.close
 
 ##########################
 ##########################
-####pring SMT results ####
+####print SMT results ####
 ##########################
 ##########################
 
@@ -698,6 +713,7 @@ for i in range(len(path_condition)):
 ###generate new inputs####
 ##########################
 ##########################
+
 #pdb.set_trace()
 if s.check() != sat:
     print ("ERROR: try to collect satisfiable constraints only!")
