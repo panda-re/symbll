@@ -23,7 +23,7 @@ import pdb
 ## is env ptr == concrete cpu?! - damn it's late
 ## we do not zext/sext some values - does this cause any trouble?
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.CRITICAL, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger()
 
 offset_to_slot = {}
@@ -125,17 +125,17 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     bb_counter = bb_counter + 1
     print (bb_counter)
     logger.debug("====== DEBUG: BB dump ======")
-    print(bb)
+    #print(bb)
     entry = plog.next().llvmEntry
-    print ("entry:")
-    print (entry.type)
+    #print ("entry:")
+    #print (entry.type)
     #if bb_counter >= 10000:
     #    print (bb)
     #    print (entry)
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
         #if (bb_counter >= 10000):
-        print("instr : " + str(insn))
+        #print("instr : " + str(insn))
 
 ##########################
 ##########################
@@ -552,19 +552,13 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             # False case: add neglected condition    
                 successor = insn.operands[1 + entry.condition]
                 operand = lookup_operand(insn.operands[0], symbolic_locals)
-                if isinstance(operand,BitVecNumRef):
-                    pass
-                else:
-                    inverted_operand = Not(operand)
-                    path_condition.append(inverted_operand)
+                inverted_operand = Not(operand)
+                path_condition.append(inverted_operand)
             elif entry.condition == 1:
             # True case: add condition
                 successor = insn.operands[1 + entry.condition]
                 operand = lookup_operand(insn.operands[0], symbolic_locals)
-                if isinstance(operand,BitVecNumRef):
-                    pass
-                else:
-                    path_condition.append(operand)
+                path_condition.append(operand)
             previous_bb = bb
             r = 0
 
