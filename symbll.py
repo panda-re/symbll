@@ -125,7 +125,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     bb_counter = bb_counter + 1
     print (bb_counter)
     logger.debug("====== DEBUG: BB dump ======")
-    #print(bb)
+    print(bb)
     entry = plog.next().llvmEntry
     #print ("entry:")
     #print (entry.type)
@@ -135,7 +135,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     check(entry, LLVMType.BB)
     for insn in bb.instructions:
         #if (bb_counter >= 10000):
-        #print("instr : " + str(insn))
+        print("instr : " + str(insn))
 
 ##########################
 ##########################
@@ -158,10 +158,33 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 assert entry.addr_type == 2
                 #plog entry LOAD (type 20) has field VALUE now
                 #Thanks to Ray Wang
-                val = BitVecVal(entry.value, entry.num_bytes*8)
-                host_ram[entry.address] = val
-                symbolic_locals[insn] = val
-            
+                #val = BitVecVal(entry.value, entry.num_bytes*8)
+                #host_ram[entry.address] = val     
+                #symbolic_locals[insn] = val
+                if (entry.address >= 536871373 and entry.address <= 536871473):
+                    #try:# not applicable because host_ram always returnes SOMETHING
+                    #    symbolic_locals[insn] = host_ram[entry.address] # if already in host_ram take from there
+                    #except:
+                    symbolic_locals[insn] = BitVec(entry.address, entry.num_bytes*8) # otherwise take create new symbolic value
+                    host_ram[entry.address] = BitVec(entry.address, entry.num_bytes*8)
+                    global end # end loop on first hit
+                    end = True
+                    path_condition.append(If(BitVec(entry.address, entry.num_bytes*8) == BitVecVal(entry.value, entry.num_bytes*8),True, False))
+                    #pdb.set_trace()
+                    #print (entry)
+                    #print (host_ram[entry.address])
+                    #print (host_ram[entry.address].sort())
+                    #s = Solver()
+                    #s.add(If(symbolic_locals[insn] == entry.value, True, False))
+                    #print (s.check())
+                    #print (s.model())
+
+                else:
+                    symbolic_locals[insn] = BitVecVal(entry.value, entry.num_bytes*8) # if load is not in range of interest create concrete value
+                #print (entry)
+
+
+
             # handle STORE helpers 
             elif insn.called_function.name.startswith('helper_le_st') or insn.called_function.name.startswith('helper_ret_st'):
                 entry = plog.next().llvmEntry
@@ -301,13 +324,14 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                         # To Do : concre value should be  the correct type - otherwise causes issues
                 else:
                     logger.debug("DEBUG: Didn't find %#x in the CPU, retrieving from host RAM" % entry.address)
-                    if (entry.address > 536871373 and entry.address < 536871473):
+                    if (entry.address >= 536871373 and entry.address <= 536871473):
                         try:
                             symbolic_locals[insn] = host_ram[entry.address]
                         except:
                             symbolic_locals[insn] = BitVec(entry.address, insn.type.width)
                     else:
                         symbolic_locals[insn] = BitVecVal(entry.value, insn.type.width)
+
                     global end
                     end = True
 
@@ -707,10 +731,10 @@ for i in range(len(path_condition)):
     #print (path_condition[i])
     #print (s.check())
     if s.check() == sat:
-        if s.model != cmpm:
-            print (path_condition[i])
-            print (s.check())
-            print(s.model())
+        #if s.model != cmpm:
+        print (path_condition[i])
+        print (s.check())
+        print(s.model())
 
 ##########################
 ##########################
