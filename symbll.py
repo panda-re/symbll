@@ -253,8 +253,8 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 entry = plog.next().llvmEntry # fucntion call is recorded AFTER execution
             
             # These functions are LLVM intrinsics and have to be symbolically modelled individually
-            #elif insn.called_function.name.startswith('llvm'):
-            #    symbolic_locals[insn] = BitVec(insn.called_function.name, insn.type.width)
+            elif insn.called_function.name.startswith('llvm'):
+                symbolic_locals[insn] = BitVec(insn.called_function.name, insn.type.width)
             
             else:
                 logger.error("insn:"+ str(insn))
@@ -308,6 +308,8 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                             symbolic_locals[insn] = BitVec(entry.address, insn.type.width)
                     else:
                         symbolic_locals[insn] = BitVecVal(entry.value, insn.type.width)
+                    global end
+                    end = True
 
         elif insn.opcode == OPCODE_STORE:
             m = insn.get_metadata('host')
@@ -651,9 +653,9 @@ plog.next()
 
 #MAIN_FUNC_ADDR = 14728 #SAGE example pc = 0x104CC
 #initialize_to(plog, MAIN_FUNC_ADDR)
-
+end = False
 ctr = 0
-while True:
+while end == False:
     #ctr += 1
     #if ctr == 150:
     #    break
