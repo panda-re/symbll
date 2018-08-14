@@ -654,9 +654,9 @@ plog.next()
 
 ctr = 0
 while True:
-    ctr += 1
-    if ctr == 150:
-        break
+    #ctr += 1
+    #if ctr == 150:
+    #    break
     try:
         entry = plog.next()
     except StopIteration:
@@ -695,12 +695,20 @@ file.close
 
 s.reset()
 
+cmps = Solver()
+cmps.add(BitVecVal("10",32)<11)
+cmps.check()
+cmpm = cmps.model()
+
 for i in range(len(path_condition)):
     s.add(path_condition[i])
-    print (path_condition[i])
-    print (s.check())
+    #print (path_condition[i])
+    #print (s.check())
     if s.check() == sat:
-        print(s.model())
+        if s.model != cmpm:
+            print (path_condition[i])
+            print (s.check())
+            print(s.model())
 
 ##########################
 ##########################
