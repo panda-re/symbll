@@ -169,7 +169,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                     host_ram[entry.address] = BitVec(entry.address, entry.num_bytes*8)
                     global end # end loop on first hit
                     end = True
-                    path_condition.append(If(BitVec(entry.address, entry.num_bytes*8) == BitVecVal(entry.value, entry.num_bytes*8),True, False))
+                    #path_condition.append(If(BitVec(entry.address, entry.num_bytes*8) == BitVecVal(entry.value, entry.num_bytes*8),True, False))
                     #pdb.set_trace()
                     #print (entry)
                     #print (host_ram[entry.address])
@@ -528,10 +528,13 @@ def exec_bb(mod, plog, bb, symbolic_locals):
 
         elif insn.opcode == OPCODE_SELECT:
             entry = plog.next().llvmEntry
-            if (entry.condition == 1):
-                symbolic_locals[insn] = lookup_operand(insn.operands[1], symbolic_locals)
-            else:
-                symbolic_locals[insn] = lookup_operand(insn.operands[2], symbolic_locals)
+            symbolic_locals[insn] = If(lookup_operand(insn.operands[0], symbolic_locals), lookup_operand(insn.operands[1], symbolic_locals), lookup_operand(insn.operands[2], symbolic_locals))
+            #print ("AAAAAAA")
+            #print (z)
+            #if (entry.condition == 1):
+            #    symbolic_locals[insn] = lookup_operand(insn.operands[1], symbolic_locals)
+            #else:
+            #    symbolic_locals[insn] = lookup_operand(insn.operands[2], symbolic_locals)
         
         elif insn.opcode == OPCODE_ICMP:
             o1 = lookup_operand(insn.operands[0], symbolic_locals)
