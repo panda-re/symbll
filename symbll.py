@@ -171,7 +171,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                     end = True
                     #path_condition.append(If(BitVec(entry.address, entry.num_bytes*8) == BitVecVal(entry.value, entry.num_bytes*8),True, False))
                     #pdb.set_trace()
-                    #print (entry)
+                    print (entry)
                     #print (host_ram[entry.address])
                     #print (host_ram[entry.address].sort())
                     #s = Solver()
@@ -529,6 +529,23 @@ def exec_bb(mod, plog, bb, symbolic_locals):
         elif insn.opcode == OPCODE_SELECT:
             entry = plog.next().llvmEntry
             symbolic_locals[insn] = If(lookup_operand(insn.operands[0], symbolic_locals), lookup_operand(insn.operands[1], symbolic_locals), lookup_operand(insn.operands[2], symbolic_locals))
+            #symbolic_locals[insn] = If(lookup_operand(insn.operands[0], symbolic_locals), True, False)
+            
+            s = Solver()
+            s.add(If(lookup_operand(insn.operands[0], symbolic_locals), True, False))
+            if s.check()==sat:
+                operand = lookup_operand(insn.operands[0], symbolic_locals)
+                path_condition.append(operand)
+                print ("1")
+                print (operand)
+            else:
+                operand = lookup_operand(insn.operands[0], symbolic_locals)
+                inverted_operand = Not(operand)
+                path_condition.append(inverted_operand)
+                print ("0")
+                print (inverted_operand)
+            print (len(path_condition))
+
             #print ("AAAAAAA")
             #print (z)
             #if (entry.condition == 1):
@@ -542,6 +559,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             #if type(o1)==long: o1=BitVecVal(o1,insn.type.width)
             #if type(o2)==long: o2=BitVecVal(o2,insn.type.width)
             print (o1)
+            print (o2)
             print (type(o1))
             if insn.predicate == ICMP_NE:
                 res = (o1 != o2)
@@ -553,6 +571,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             elif insn.predicate == ICMP_SGT:
                 res = (o1 > o2)
             elif insn.predicate == ICMP_UGE:
+                #if bb_counter ==47: pdb.set_trace()
                 res = (o1 >= o2)
             elif insn.predicate == ICMP_SGE:
                 res = (o1 >= o2)
@@ -583,11 +602,15 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                 operand = lookup_operand(insn.operands[0], symbolic_locals)
                 inverted_operand = Not(operand)
                 path_condition.append(inverted_operand)
+                print ("00000")
+                print (inverted_operand)
             elif entry.condition == 1:
             # True case: add condition
                 successor = insn.operands[1 + entry.condition]
                 operand = lookup_operand(insn.operands[0], symbolic_locals)
                 path_condition.append(operand)
+                print ("11111")
+                print (operand)
             previous_bb = bb
             r = 0
 
@@ -763,3 +786,7 @@ else:
         s.add(path_condition[i])
         s.check()
     print (new_inputs)
+
+#print (path_condition[33])
+#print (path_condition[34])
+#print (path_condition[35])
