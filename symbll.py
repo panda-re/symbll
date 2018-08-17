@@ -123,6 +123,7 @@ def exec_bb(mod, plog, bb, symbolic_locals):
     global initial_cpu_state
     logger.warning(bb_counter)
     bb_counter = bb_counter + 1
+    #if bb_counter ==47: pdb.set_trace()
     print (bb_counter)
     logger.debug("====== DEBUG: BB dump ======")
     print(bb)
@@ -312,8 +313,28 @@ def exec_bb(mod, plog, bb, symbolic_locals):
                     if slot_name not in initial_cpu_state:
                         initial_cpu_state[slot_name] = entry.value #holding the initial state so it can later be exported/ reused for subsequent runs
                     
+                    ###############
+
+                    ###############
+
+                    ###############
+
                     # save value as both, concrete and symbolic
-                    concrete_cpu[slot_name] = BitVecVal(entry.value, insn.type.width)
+                    #concrete_cpu[slot_name] = BitVecVal(entry.value, insn.type.width)
+                    if isinstance(host_ram[entry.address], long):
+                        concrete_cpu[slot_name] = BitVecVal(entry.value,insn.type.width)#BitVecVal(entry.address, insn.type.width)
+                    else: 
+                        #pdb.set_trace()
+                        concrete_cpu[slot_name] = host_ram[entry.address]#BitVecVal(entry.address, insn.type.width)
+
+                    ###############
+
+                    ###############
+
+                    ###############
+
+                    
+                    
                     symbolic_cpu[slot_name] = BitVec(slot_name,insn.type.width) #holding the current state, so it's accessable at any time
                     # make part of the exectution symbolic
                     # and the other part concrete                    
@@ -571,7 +592,6 @@ def exec_bb(mod, plog, bb, symbolic_locals):
             elif insn.predicate == ICMP_SGT:
                 res = (o1 > o2)
             elif insn.predicate == ICMP_UGE:
-                #if bb_counter ==47: pdb.set_trace()
                 res = (o1 >= o2)
             elif insn.predicate == ICMP_SGE:
                 res = (o1 >= o2)
@@ -756,11 +776,11 @@ for i in range(len(path_condition)):
     s.add(path_condition[i])
     #print (path_condition[i])
     #print (s.check())
-    if s.check() == sat:
+    #if s.check() == sat:
         #if s.model != cmpm:
-        print (path_condition[i])
-        print (s.check())
-        print(s.model())
+    print (path_condition[i])
+    print (s.check())
+    print(s.model())
 
 ##########################
 ##########################
